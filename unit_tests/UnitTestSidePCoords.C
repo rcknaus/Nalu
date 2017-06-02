@@ -23,6 +23,58 @@
 
 #include "UnitTestUtils.h"
 
+
+namespace {
+  std::array<double, 3>
+  pyr_elem_to_side_coords(int side_ordinal, double x, double y)
+  {
+    stk::topology topo = stk::topology::PYRAMID_5;
+    int dim = topo.dimension();
+
+    stk::mesh::MetaData meta(dim);
+    stk::mesh::BulkData bulk(meta, MPI_COMM_WORLD);
+    auto elem = unit_test_utils::create_one_reference_element(bulk, topo);
+
+    using VectorFieldType = stk::mesh::Field<double, stk::mesh::Cartesian>;
+    const VectorFieldType& coordField = *static_cast<const VectorFieldType*>(meta.coordinate_field());
+
+    auto* meSide = sierra::nalu::get_surface_master_element(topo.side_topology(side_ordinal));
+
+    auto meElem = sierra::nalu::get_surface_master_element(topo);
+    const int* side_node_ordinals = meElem->side_node_ordinals(side_ordinal);
+    const auto* elem_node_rels = bulk.begin_nodes(elem);
+    std::vector<double> faceCoords(meSide->nodesPerElement_ * dim, 0.0);
+    for (int d = 0; d < dim; ++d) {
+      for (int n = 0; n < meSide->nodesPerElement_; ++n) {
+        stk::mesh::Entity face_node = elem_node_rels[side_node_ordinals[n]];
+        const double* coords = stk::mesh::field_data(coordField, face_node);
+        faceCoords[d * meSide->nodesPerElement_ + n] = coords[d];
+      }
+    }
+
+    std::array<double, 3> faceInterpCoords{};
+    std::array<double, 2> sideIsoPoint = {{ x, y }};
+    meSide->interpolatePoint(dim, sideIsoPoint.data(), faceCoords.data(), faceInterpCoords.data());
+
+    return faceInterpCoords;
+  }
+}
+
+TEST(print_pyr, print_pyr)
+{
+  int side_ordinal = 0;
+
+  double x = 0;
+  double y = 0.25;
+
+  std::array<double,3> elemPCoords = pyr_elem_to_side_coords(side_ordinal, x, y);
+
+  unit_test_utils::nalu_out() << "side_ordinal: " << side_ordinal
+            << ", sidePCoords = (" << x << ", " << y << ") -> elemPCoords = ("
+            << elemPCoords[0] << ", " << elemPCoords[1] << ", " << elemPCoords[2] << ")" << std::endl;
+}
+
+
 namespace
 {
   void check_elem_to_side_coords(stk::topology topo)
