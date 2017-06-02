@@ -270,7 +270,8 @@ MasterElement::MasterElement()
   : nDim_(0),
     nodesPerElement_(0),
     numIntPoints_(0),
-    scaleToStandardIsoFac_(1.0)
+    scaleToStandardIsoFac_(1.0),
+    aeroStylePyramid_(true)
 {
   // nothing else
 }
@@ -3426,9 +3427,29 @@ TetSCS::parametric_distance(const std::vector<double> &x)
   return dist;
 }
 
+
+
 //--------------------------------------------------------------------------
 //-------- constructor -----------------------------------------------------
 //--------------------------------------------------------------------------
+
+namespace
+{
+
+double regularize_apex(double t_tmp)
+{
+  // the shape functions have a singularity at t = 1.0
+  // following the intrepid implementation, we'll just clip t
+  // to be 1 +/- machine epsilon around t = 1
+
+  constexpr double eps = std::numeric_limits<double>::epsilon();
+  const double one_minus_t = 1.0 - t_tmp;
+  const double t = (std::fabs(one_minus_t) > eps) ? t_tmp : 1.0 + std::copysign(eps, one_minus_t);
+
+  return t;
+}
+
+}
 PyrSCV::PyrSCV()
   : MasterElement()
 {
@@ -3522,19 +3543,36 @@ PyrSCV::pyr_shape_fcn(
   const double *par_coord, 
   double *shape_fcn)
 {
-  const double one  = 1.0;
-  for ( int j = 0; j < npts; ++j ) {
-    const int fivej = 5*j;
-    const int k     = 3*j;
-    const double r    = par_coord[k+0];
-    const double s    = par_coord[k+1];
-    const double t    = par_coord[k+2];
+  if (!aeroStylePyramid_) {
+    const double one  = 1.0;
+    for ( int j = 0; j < npts; ++j ) {
+      const int fivej = 5*j;
+      const int k     = 3*j;
+      const double r    = par_coord[k+0];
+      const double s    = par_coord[k+1];
+      const double t    = par_coord[k+2];
 
-    shape_fcn[0 + fivej] = 0.25*(1.0-r)*(1.0-s)*(one-t);
-    shape_fcn[1 + fivej] = 0.25*(1.0+r)*(1.0-s)*(one-t);
-    shape_fcn[2 + fivej] = 0.25*(1.0+r)*(1.0+s)*(one-t);
-    shape_fcn[3 + fivej] = 0.25*(1.0-r)*(1.0+s)*(one-t);
-    shape_fcn[4 + fivej] = t;
+      shape_fcn[0 + fivej] = 0.25*(1.0-r)*(1.0-s)*(one-t);
+      shape_fcn[1 + fivej] = 0.25*(1.0+r)*(1.0-s)*(one-t);
+      shape_fcn[2 + fivej] = 0.25*(1.0+r)*(1.0+s)*(one-t);
+      shape_fcn[3 + fivej] = 0.25*(1.0-r)*(1.0+s)*(one-t);
+      shape_fcn[4 + fivej] = t;
+    }
+  }
+  else {
+    for ( int j = 0; j < npts; ++j ) {
+      const double r = par_coord[0 + 3*j];
+      const double s = par_coord[1 + 3*j];
+      const double t = regularize_apex(par_coord[2+3*j]);
+
+      const double quarter_inv_tm1 = 0.25 / (1.0 - t);
+
+      shape_fcn[0 + 5*j] = (1.0 - r - t) * (1.0 - s - t) * quarter_inv_tm1;
+      shape_fcn[1 + 5*j] = (1.0 + r - t) * (1.0 - s - t) * quarter_inv_tm1;
+      shape_fcn[2 + 5*j] = (1.0 + r - t) * (1.0 + s - t) * quarter_inv_tm1;
+      shape_fcn[3 + 5*j] = (1.0 - r - t) * (1.0 + s - t) * quarter_inv_tm1;
+      shape_fcn[4 + 5*j] = t;
+    }
   }
 }
 
@@ -3858,7 +3896,8 @@ double PyrSCS::isInElement(
     error_vec[2] = pointCoord[2] - dot5(weights.data(), elemNodalCoord + 2 * nNodes);
 
     // update guess along gradient of mapping from physical-to-reference coordinates
-    // transpose of the jacobian of the forward mapping
+
+    // transpose of the jacobian of the reference-to-physical mapping
     constexpr int deriv_size = nNodes * dim;
     std::array<double, deriv_size> deriv;
     pyr_derivative(1, guess.data(), deriv.data());
@@ -3946,33 +3985,70 @@ void PyrSCS::pyr_derivative(
 {
   // d3d(c,s,j) = deriv[c + 3*(s + 5*j)] = deriv[c+3s+15j]
 
-  for ( int j = 0; j < npts; ++j) {
-    const int k = j*3;
-    const int p = 15*j;
+  if (!aeroStylePyramid_) {
+    for ( int j = 0; j < npts; ++j) {
+      const int k = j*3;
+      const int p = 15*j;
 
-    double r = intgLoc[k+0];
-    double s = intgLoc[k+1];
-    double t = intgLoc[k+2];
+      double r = intgLoc[k+0];
+      double s = intgLoc[k+1];
+      double t = intgLoc[k+2];
 
-    deriv[0+3*0+p] =-0.25*(1.0-s)*(1.0-t);  // d(N_1)/ d(r) = deriv[0]
-    deriv[1+3*0+p] =-0.25*(1.0-r)*(1.0-t);  // d(N_1)/ d(s) = deriv[1]
-    deriv[2+3*0+p] =-0.25*(1.0-r)*(1.0-s);  // d(N_1)/ d(t) = deriv[2]
+      deriv[0+3*0+p] =-0.25*(1.0-s)*(1.0-t);  // d(N_1)/ d(r) = deriv[0]
+      deriv[1+3*0+p] =-0.25*(1.0-r)*(1.0-t);  // d(N_1)/ d(s) = deriv[1]
+      deriv[2+3*0+p] =-0.25*(1.0-r)*(1.0-s);  // d(N_1)/ d(t) = deriv[2]
 
-    deriv[0+3*1+p] = 0.25*(1.0-s)*(1.0-t);  // d(N_2)/ d(r) = deriv[0+3]
-    deriv[1+3*1+p] =-0.25*(1.0+r)*(1.0-t);  // d(N_2)/ d(s) = deriv[1+3]
-    deriv[2+3*1+p] =-0.25*(1.0+r)*(1.0-s);  // d(N_2)/ d(t) = deriv[2+3]
+      deriv[0+3*1+p] = 0.25*(1.0-s)*(1.0-t);  // d(N_2)/ d(r) = deriv[0+3]
+      deriv[1+3*1+p] =-0.25*(1.0+r)*(1.0-t);  // d(N_2)/ d(s) = deriv[1+3]
+      deriv[2+3*1+p] =-0.25*(1.0+r)*(1.0-s);  // d(N_2)/ d(t) = deriv[2+3]
 
-    deriv[0+3*2+p] = 0.25*(1.0+s)*(1.0-t);  // d(N_3)/ d(r) = deriv[0+6]
-    deriv[1+3*2+p] = 0.25*(1.0+r)*(1.0-t);  // d(N_3)/ d(s) = deriv[1+6]
-    deriv[2+3*2+p] =-0.25*(1.0+r)*(1.0+s);  // d(N_3)/ d(t) = deriv[2+6]
+      deriv[0+3*2+p] = 0.25*(1.0+s)*(1.0-t);  // d(N_3)/ d(r) = deriv[0+6]
+      deriv[1+3*2+p] = 0.25*(1.0+r)*(1.0-t);  // d(N_3)/ d(s) = deriv[1+6]
+      deriv[2+3*2+p] =-0.25*(1.0+r)*(1.0+s);  // d(N_3)/ d(t) = deriv[2+6]
 
-    deriv[0+3*3+p] =-0.25*(1.0+s)*(1.0-t);  // d(N_4)/ d(r) = deriv[0+9]
-    deriv[1+3*3+p] = 0.25*(1.0-r)*(1.0-t);  // d(N_4)/ d(s) = deriv[1+9]
-    deriv[2+3*3+p] =-0.25*(1.0-r)*(1.0+s);  // d(N_4)/ d(t) = deriv[2+9]
+      deriv[0+3*3+p] =-0.25*(1.0+s)*(1.0-t);  // d(N_4)/ d(r) = deriv[0+9]
+      deriv[1+3*3+p] = 0.25*(1.0-r)*(1.0-t);  // d(N_4)/ d(s) = deriv[1+9]
+      deriv[2+3*3+p] =-0.25*(1.0-r)*(1.0+s);  // d(N_4)/ d(t) = deriv[2+9]
 
-    deriv[0+3*4+p] = 0.0;                   // d(N_5)/ d(r) = deriv[0+12]
-    deriv[1+3*4+p] = 0.0;                   // d(N_5)/ d(s) = deriv[1+12]
-    deriv[2+3*4+p] = 1.0;                   // d(N_5)/ d(t) = deriv[2+12]
+      deriv[0+3*4+p] = 0.0;                   // d(N_5)/ d(r) = deriv[0+12]
+      deriv[1+3*4+p] = 0.0;                   // d(N_5)/ d(s) = deriv[1+12]
+      deriv[2+3*4+p] = 1.0;                   // d(N_5)/ d(t) = deriv[2+12]
+    }
+  }
+  else {
+    for ( int j = 0; j < npts; ++j) {
+      const double r = intgLoc[0+3*j];
+      const double s = intgLoc[1+3*j];
+      const double t = regularize_apex(intgLoc[2+3*j]);
+
+      const double quarter_inv_tm1 = 0.25 / (1.0 - t);
+      const double t_term = 4.0 * r * s * quarter_inv_tm1 * quarter_inv_tm1;
+
+      // node 0
+      deriv[0 + 15 * j] = -(1.0 - s - t) * quarter_inv_tm1;
+      deriv[1 + 15 * j] = -(1.0 - r - t) * quarter_inv_tm1;
+      deriv[2 + 15 * j] = +t_term - 0.25;
+
+      // node 1
+      deriv[3 + 15 * j] = +(1.0 - s - t) * quarter_inv_tm1;
+      deriv[4 + 15 * j] = -(1.0 + r - t) * quarter_inv_tm1;
+      deriv[5 + 15 * j] = -t_term - 0.25;
+
+      // node 2
+      deriv[6 + 15 * j] = +(1.0 + s - t) * quarter_inv_tm1;
+      deriv[7 + 15 * j] = +(1.0 + r - t) * quarter_inv_tm1;
+      deriv[8 + 15 * j] = +t_term - 0.25;
+
+      // node 3
+      deriv[9 + 15 * j] = -(1.0 + s - t) * quarter_inv_tm1;
+      deriv[10 + 15 * j] = +(1.0 - r - t) * quarter_inv_tm1;
+      deriv[11 + 15 * j] = -t_term - 0.25;
+
+      // node 4
+      deriv[12 + 15 * j] = 0.0;
+      deriv[13 + 15 * j] = 0.0;
+      deriv[14 + 15 * j] = 1.0;
+    }
   }
 }
 
@@ -4023,25 +4099,43 @@ PyrSCS::shifted_shape_fcn(double *shpfc)
 //--------------------------------------------------------------------------
 //-------- pyr_shape_fcn ---------------------------------------------------
 //--------------------------------------------------------------------------
+
 void
 PyrSCS::pyr_shape_fcn(
   const int  &npts,
   const double *par_coord, 
   double *shape_fcn)
 {
-  const double one  = 1.0;
-  for ( int j = 0; j < npts; ++j ) {
-    const int fivej = 5*j;
-    const int k     = 3*j;
-    const double r    = par_coord[k+0];
-    const double s    = par_coord[k+1];
-    const double t    = par_coord[k+2];
+  if (!aeroStylePyramid_) {
+    const double one  = 1.0;
+    for ( int j = 0; j < npts; ++j ) {
+      const int fivej = 5*j;
+      const int k     = 3*j;
+      const double r    = par_coord[k+0];
+      const double s    = par_coord[k+1];
+      const double t    = par_coord[k+2];
 
-    shape_fcn[0 + fivej] = 0.25*(1.0-r)*(1.0-s)*(one-t);
-    shape_fcn[1 + fivej] = 0.25*(1.0+r)*(1.0-s)*(one-t);
-    shape_fcn[2 + fivej] = 0.25*(1.0+r)*(1.0+s)*(one-t);
-    shape_fcn[3 + fivej] = 0.25*(1.0-r)*(1.0+s)*(one-t);
-    shape_fcn[4 + fivej] = t;
+      shape_fcn[0 + fivej] = 0.25*(1.0-r)*(1.0-s)*(one-t);
+      shape_fcn[1 + fivej] = 0.25*(1.0+r)*(1.0-s)*(one-t);
+      shape_fcn[2 + fivej] = 0.25*(1.0+r)*(1.0+s)*(one-t);
+      shape_fcn[3 + fivej] = 0.25*(1.0-r)*(1.0+s)*(one-t);
+      shape_fcn[4 + fivej] = t;
+    }
+  }
+  else {
+    for ( int j = 0; j < npts; ++j ) {
+      const double r = par_coord[0 + 3*j];
+      const double s = par_coord[1 + 3*j];
+      const double t = regularize_apex(par_coord[2+3*j]);
+
+      const double quarter_inv_tm1 = 0.25 / (1.0 - t);
+
+      shape_fcn[0 + 5*j] = (1.0 - r - t) * (1.0 - s - t) * quarter_inv_tm1;
+      shape_fcn[1 + 5*j] = (1.0 + r - t) * (1.0 - s - t) * quarter_inv_tm1;
+      shape_fcn[2 + 5*j] = (1.0 + r - t) * (1.0 + s - t) * quarter_inv_tm1;
+      shape_fcn[3 + 5*j] = (1.0 - r - t) * (1.0 + s - t) * quarter_inv_tm1;
+      shape_fcn[4 + 5*j] = t;
+    }
   }
 }
 
@@ -4891,22 +4985,22 @@ WedSCS::sidePcoords_to_elemPcoords(
     break;
   case 1:
     for (int i=0; i<npoints; i++) {//face1:quad: (x,y) -> (0.5*(1-y),0.5*(1 + y),x)
-      elem_pcoords[i*3+0] = 0.5*(1.0-side_pcoords[2*i+1]);
-      elem_pcoords[i*3+1] = 0.5*(1.0+side_pcoords[2*i+1]);
-      elem_pcoords[i*3+2] = side_pcoords[2*i+0];
+      elem_pcoords[i*3+0] = 0.5*(1.0-side_pcoords[2*i+0]);
+      elem_pcoords[i*3+1] = 0.5*(1.0+side_pcoords[2*i+0]);
+      elem_pcoords[i*3+2] = side_pcoords[2*i+1];
     }
     break;
   case 2:
     for (int i=0; i<npoints; i++) {//face2:quad: (x,y) -> (0,0.5*(1 + x),y)
       elem_pcoords[i*3+0] = 0.0;
-      elem_pcoords[i*3+1] = 0.5*(1.0+side_pcoords[2*i+0]);
-      elem_pcoords[i*3+2] = side_pcoords[2*i+1];
+      elem_pcoords[i*3+1] = 0.5*(1.0+side_pcoords[2*i+1]);
+      elem_pcoords[i*3+2] = side_pcoords[2*i+0];
     }
     break;
   case 3:
     for (int i=0; i<npoints; i++) {//face3:tri: (x,y) -> (x,y,-1)
-      elem_pcoords[i*3+0] = side_pcoords[2*i+0];
-      elem_pcoords[i*3+1] = side_pcoords[2*i+1];
+      elem_pcoords[i*3+0] = side_pcoords[2*i+1];
+      elem_pcoords[i*3+1] = side_pcoords[2*i+0];
       elem_pcoords[i*3+2] = -1.0;
     }
     break;
@@ -5866,7 +5960,7 @@ QuadrilateralP2Element::interpolatePoint(
   double *result )
 {
   constexpr int nNodes = 9;
-  std::array<double, nNodes> shapefct;
+  std::array<double, nNodes> shapefct{};
   quad9_shape_fcn(1, isoParCoord, shapefct.data());
 
   for (int i = 0; i < nComp; i++) {
@@ -5939,6 +6033,43 @@ double QuadrilateralP2Element::isInElement(
     dist = parametric_distance(guess);
   }
   return dist;
+}
+
+void
+QuadrilateralP2Element::sidePcoords_to_elemPcoords(
+  const int & side_ordinal,
+  const int & npoints,
+  const double *side_pcoords,
+  double *elem_pcoords)
+{
+  switch (side_ordinal) {
+  case 0:
+    for (int i=0; i<npoints; i++) {
+      elem_pcoords[i*2+0] = side_pcoords[i];
+      elem_pcoords[i*2+1] = -1;
+    }
+    break;
+  case 1:
+    for (int i=0; i<npoints; i++) {
+      elem_pcoords[i*2+0] = 1;
+      elem_pcoords[i*2+1] = side_pcoords[i];
+    }
+    break;
+  case 2:
+    for (int i=0; i<npoints; i++) {
+      elem_pcoords[i*2+0] = -side_pcoords[i];
+      elem_pcoords[i*2+1] = 1;
+    }
+    break;
+  case 3:
+    for (int i=0; i<npoints; i++) {
+      elem_pcoords[i*2+0] = -1;
+      elem_pcoords[i*2+1] = -side_pcoords[i];
+    }
+    break;
+  default:
+    throw std::runtime_error("QuadrilateralP2Element::sideMap invalid ordinal");
+  }
 }
 
 //--------------------------------------------------------------------------
@@ -8802,7 +8933,7 @@ Edge32DSCS::shape_fcn(double *shpfc)
   for ( int i =0; i< numIntPoints_; ++i ) {
     int j = 3*i;
     const double s = intgLoc_[i];
-    shpfc[j  ] = -s*(1.0-s)*0.5;
+    shpfc[j  ] = -s *(1.0-s)*0.5;
     shpfc[j+1] = s*(1.0+s)*0.5;
     shpfc[j+2] = (1.0-s)*(1.0+s);
   }
@@ -8822,6 +8953,27 @@ Edge32DSCS::shifted_shape_fcn(double *shpfc)
     shpfc[j+2] = (1.0-s)*(1.0+s);
   }
 }
+
+//--------------------------------------------------------------------------
+//-------- interpolate_point -----------------------------------------------
+//--------------------------------------------------------------------------
+void
+Edge32DSCS::interpolatePoint(
+  const int &nComp,
+  const double *isoParCoord,
+  const double *field,
+  double *result)
+{
+  constexpr int nNodes = 3;
+
+  double s = isoParCoord[0];
+  std::array<double, nNodes> shapefct = {{-0.5*s*(1-s), +0.5*s*(1+s), (1-s)*(1+s)}};
+
+  for ( int i =0; i< nComp; ++i ) {
+    result[i] = shapefct[0] * field[3*i+0] + shapefct[1] * field[3*i+1] + shapefct[2] * field[3*i+2];
+  }
+}
+
 
 //--------------------------------------------------------------------------
 //-------- area_vector -----------------------------------------------------

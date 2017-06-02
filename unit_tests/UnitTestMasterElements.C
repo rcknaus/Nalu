@@ -367,14 +367,6 @@ protected:
     sierra::nalu::MasterElement* meSV;
 };
 
-#define TEST_F_ALL_TOPOS_NO_PYR(x, y) \
-    TEST_F(x, tri##_##y)   { y(stk::topology::TRI_3_2D); }   \
-    TEST_F(x, quad4##_##y)  { y(stk::topology::QUAD_4_2D); } \
-    TEST_F(x, quad9##_##y)  { y(stk::topology::QUAD_9_2D); } \
-    TEST_F(x, tet##_##y)   { y(stk::topology::TET_4); }      \
-    TEST_F(x, wedge##_##y) { y(stk::topology::WEDGE_6); }    \
-    TEST_F(x, hex8##_##y)   { y(stk::topology::HEX_8); }     \
-    TEST_F(x, hex27##_##y)  { y(stk::topology::HEX_27); }
 
 #define TEST_F_ALL_TOPOS(x, y) \
     TEST_F(x, tri##_##y)   { y(stk::topology::TRI_3_2D); }   \
@@ -395,17 +387,13 @@ protected:
     TEST_F(x, hex8##_##y)   { y(stk::topology::HEX_8); }
 
 // Patch tests: pyramids fail
-TEST_F_ALL_TOPOS_NO_PYR(MasterElement, scs_interpolation);
-TEST_F_ALL_TOPOS_NO_PYR(MasterElement, scs_derivative);
-TEST_F_ALL_TOPOS_NO_PYR(MasterElement, scv_interpolation);
-
-// Pyramid fails since the reference element
-// since the constant Jacobian assumption is violated
-TEST_F_ALL_TOPOS_NO_PYR(MasterElement, is_in_element);
-
-// Pyramid works. Doesn't work for higher-order elements sicne they have more ips than nodes
-TEST_F_ALL_P1_TOPOS(MasterElement, scv_shifted_ips_are_nodal);
-
-// works fore everything
+TEST_F_ALL_TOPOS(MasterElement, scs_interpolation);
+TEST_F_ALL_TOPOS(MasterElement, scs_derivative);
+TEST_F_ALL_TOPOS(MasterElement, scv_interpolation);
+TEST_F_ALL_TOPOS(MasterElement, is_in_element);
 TEST_F_ALL_TOPOS(MasterElement, is_not_in_element);
 TEST_F_ALL_TOPOS(MasterElement, particle_interpolation); // includes an isInElement call
+
+//Doesn't work for higher-order elements since they have more ips than nodes
+TEST_F_ALL_P1_TOPOS(MasterElement, scv_shifted_ips_are_nodal);
+

@@ -200,6 +200,8 @@ public:
 
   // FEM
   std::vector<double>weights_;
+
+  bool aeroStylePyramid_;
 };
 
 // Hex 8 subcontrol volume
@@ -789,6 +791,7 @@ public:
     const double *isoParCoord,
     const double *field,
     double *result);
+
 };
 
 // Wedge 6 subcontrol volume
@@ -1092,6 +1095,12 @@ protected:
     const double *pointCoord,
     double *isoParCoord);
 
+  virtual void sidePcoords_to_elemPcoords(
+    const int & side_ordinal,
+    const int & npoints,
+    const double *side_pcoords,
+    double *elem_pcoords);
+
   void eval_shape_functions_at_ips();
   void eval_shape_functions_at_shifted_ips();
 
@@ -1211,7 +1220,6 @@ public:
     const int ordinal, const int node);
 
   const int* side_node_ordinals(int sideOrdinal) final;
-
 
 private:
   void set_interior_info();
@@ -1596,6 +1604,12 @@ public:
 
   void shifted_shape_fcn(
     double *shpfc);
+
+  void interpolatePoint(
+    const int &nComp,
+    const double *isoParCoord,
+    const double *field,
+    double *result);
 
 private:
   void area_vector(
