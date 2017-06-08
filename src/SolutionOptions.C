@@ -616,7 +616,7 @@ SolutionOptions::load(const YAML::Node & y_node)
        cvfemReducedSensPoisson_ = true;
      }
    }
-   
+
    // overview gradient operator for CVFEM
    if ( shiftedGradOpMap_.size() > 0 ) {
      NaluEnv::self().naluOutputP0() << std::endl;
@@ -627,7 +627,6 @@ SolutionOptions::load(const YAML::Node & y_node)
                                       << " shifted: " << (shiftIt.second ? "yes" : "no") << std::endl; 
      }
    }
-
 }
 
 //--------------------------------------------------------------------------
