@@ -627,6 +627,7 @@ SolutionOptions::load(const YAML::Node & y_node)
                                       << " shifted: " << (shiftIt.second ? "yes" : "no") << std::endl; 
      }
    }
+
 }
 
 //--------------------------------------------------------------------------
