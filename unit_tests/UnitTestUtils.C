@@ -132,7 +132,6 @@ void dump_mesh(stk::mesh::BulkData& bulk, std::vector<stk::mesh::FieldBase*> fie
   for (auto* field : fields) {
     io.add_field(fileId, *field);
   }
-
   io.process_output_request(fileId, 0.0);
 }
 
@@ -170,6 +169,8 @@ stk::mesh::Entity create_one_element(
 
    auto& meta = bulk.mesh_meta_data();
    stk::mesh::Part& block_1 = meta.declare_part_with_topology("block_1", topo);
+   stk::io::put_io_part_attribute(block_1);
+
    stk::mesh::PartVector allSurfaces = { &meta.declare_part("all_surfaces", meta.side_rank()) };
 
    // set a coordinate field

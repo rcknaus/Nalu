@@ -273,7 +273,7 @@ SpecificDissipationRateEquationSystem::register_interior_algorithm(
   std::vector<std::string> checkAlgNames = {
     "specific_dissipation_rate_time_derivative",
     "lumped_specific_dissipation_rate_time_derivative"};
-  bool elementMassAlg = supp_alg_is_requested(checkAlgNames);
+  bool elementMassAlg = kernel_is_requested(checkAlgNames);
   std::map<AlgorithmType, SolverAlgorithm *>::iterator itsm =
     solverAlgDriver_->solverAlgMap_.find(algMass);
   if ( itsm == solverAlgDriver_->solverAlgMap_.end() ) {

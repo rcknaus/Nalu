@@ -51,6 +51,7 @@ double initialize_quadratic_scalar_field(const stk::mesh::BulkData& bulk,
                                       const VectorFieldType& coordField,
                                       const ScalarFieldType& qField);
 
+
 }
 
 const double tol = 1.e-10;

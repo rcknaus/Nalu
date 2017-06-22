@@ -4437,8 +4437,6 @@ Realm::setup_element_promotion()
     if (basePart->topology().rank() == stk::topology::ELEM_RANK) {
       const auto superName = super_element_part_name(targetName);
 
-      // declare the part then set the topology.  Change to declaring the part with topology
-      // when STK fixes declare_part_with_topology to work with super elements
       stk::mesh::Part* superPart;
       if (!restarted_simulation()) {
         if (metaData_->get_part(superName) != nullptr) {

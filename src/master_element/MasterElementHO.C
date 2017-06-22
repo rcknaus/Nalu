@@ -27,6 +27,9 @@
 namespace sierra{
 namespace nalu{
 
+constexpr double small_value() { return (1.0e6*std::numeric_limits<double>::min()); }
+
+
 HigherOrderHexSCV::HigherOrderHexSCV(
   ElementDescription elem,
   LagrangeBasis basis,

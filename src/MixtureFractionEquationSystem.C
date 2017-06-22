@@ -330,7 +330,7 @@ MixtureFractionEquationSystem::register_interior_algorithm(
     // include Nodal Mass algorithms
     std::vector<std::string> checkAlgNames = {"mixture_fraction_time_derivative",
                                               "lumped_mixture_fraction_time_derivative"};
-    bool elementMassAlg = supp_alg_is_requested(checkAlgNames);
+    bool elementMassAlg = kernel_is_requested(checkAlgNames);
     std::map<AlgorithmType, SolverAlgorithm *>::iterator itsm =
       solverAlgDriver_->solverAlgMap_.find(algMass);
     if ( itsm == solverAlgDriver_->solverAlgMap_.end() ) {

@@ -477,7 +477,7 @@ EquationSystem::report_built_supp_alg_names()
 }
 //--------------------------------------------------------------------------
 bool
-EquationSystem::supp_alg_is_requested(std::string suppAlgName)
+EquationSystem::kernel_is_requested(std::string suppAlgName)
 {
   const auto& nameMap = realm_.solutionOptions_->elemSrcTermsMap_;
   auto it = nameMap.find(eqnTypeName_);
@@ -491,9 +491,9 @@ EquationSystem::supp_alg_is_requested(std::string suppAlgName)
   }
   return true;
 }
-
+//--------------------------------------------------------------------------
 bool
-EquationSystem::supp_alg_is_requested(std::vector<std::string> names)
+EquationSystem::kernel_is_requested(std::vector<std::string> names)
 {
   const auto& nameMap = realm_.solutionOptions_->elemSrcTermsMap_;
   auto it = nameMap.find(eqnTypeName_);
@@ -513,8 +513,7 @@ EquationSystem::supp_alg_is_requested(std::vector<std::string> names)
   }
   return found;
 }
-
-
+//--------------------------------------------------------------------------
 bool
 EquationSystem::nodal_src_is_requested()
 {

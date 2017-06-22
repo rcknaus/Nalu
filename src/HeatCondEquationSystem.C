@@ -58,6 +58,10 @@
 #include <ScalarDiffElemKernel.h>
 #include <ScalarDiffFemKernel.h>
 
+#include <element_promotion/ElementDescription.h>
+#include <element_promotion/computational_kernels/ScalarDiffHOElemKernel.h>
+#include <user_functions/SteadyThermalContactSrcHOElemKernel.h>
+
 // user functions
 #include <user_functions/SteadyThermalContactAuxFunction.h>
 #include <user_functions/SteadyThermalContactSrcNodeSuppAlg.h>
@@ -282,6 +286,7 @@ HeatCondEquationSystem::register_interior_algorithm(
   ScalarFieldType &tempNp1 = temperature_->field_of_state(stk::mesh::StateNP1);
   VectorFieldType &dtdxNone = dtdx_->field_of_state(stk::mesh::StateNone);
 
+
   // non-solver; contribution to projected nodal gradient; allow for element-based shifted
   if ( !managePNG_ ) {
     std::map<AlgorithmType, Algorithm *>::iterator it
@@ -387,6 +392,22 @@ HeatCondEquationSystem::register_interior_algorithm(
         partTopo, *this, activeKernels, "FEM_DIFF",
         realm_.bulk_data(), *realm_.solutionOptions_, temperature_, thermalCond_, dataPreReqs
       );
+
+      if (realm_.doPromotion_) {
+        const ElementDescription& desc = *realm_.desc_;
+        int order = desc.polyOrder;
+        int dim = desc.dimension;
+
+        build_topo_kernel_if_requested<ScalarDiffHOElemKernel>(
+          partTopo, dim, order, *this, activeKernels, "experimental_ho_quad_cvfem_diffusion",
+          realm_.bulk_data(),  *realm_.solutionOptions_, temperature_, thermalCond_, desc, dataPreReqs
+        );
+
+        build_topo_kernel_if_requested<SteadyThermalContactSrcHOElemKernel>(
+          partTopo, dim, order, *this, activeKernels, "experimental_ho_quad_mms_source",
+          realm_.bulk_data(),  *realm_.solutionOptions_, desc, dataPreReqs
+        );
+      }
 
       report_invalid_supp_alg_names();
       report_built_supp_alg_names();
