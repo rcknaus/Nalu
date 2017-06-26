@@ -22,6 +22,30 @@ void dump_2d_view(const T& v, bool clipzero = true)
   std::cout << "--------------" << std::endl;
 }
 
+inline double clipv(double x) {
+  return (std::abs(x) < 1.0e-15) ? 0.0 : x;
+}
+
+inline std::string vector_string(double x, double y) {
+  std::stringstream ss;
+  ss << "(" << clipv(x) << ", " << clipv(y) << ")";
+  return ss.str();
+}
+
+template <typename T>
+void dump_2d_vector_view(const T& v)
+{
+    for (unsigned j = 0; j < v.dimension_1(); ++j) {
+      for (unsigned i = 0; i < v.dimension_0(); ++i) {
+        std::cout << std::setw(5) << v.label() << "(" << i << ", " << j << "): "
+        << std::setw(5) << vector_string(v(0,j,i), v(1,j,i));
+        if (i != v.dimension_0()-1) { std::cout << ", "; }
+      }
+      std::cout << std::endl;
+    }
+  std::cout << "--------------" << std::endl;
+}
+
 }
 
 #define EXPECT_VIEW_NEAR_1D(x,y,tol)                 \
@@ -72,6 +96,7 @@ void dump_2d_view(const T& v, bool clipzero = true)
     }                                                    \
   }                                                      \
 
+#define TEST_POLY(x,y,z)  TEST(x, y##_##order_##z) { y<z>(); }
 
 
 #endif

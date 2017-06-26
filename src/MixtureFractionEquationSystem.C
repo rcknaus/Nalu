@@ -5,7 +5,6 @@
 /*  directory structure                                                   */
 /*------------------------------------------------------------------------*/
 
-
 #include <MixtureFractionEquationSystem.h>
 #include <AlgorithmDriver.h>
 #include <AssembleScalarEdgeOpenSolverAlgorithm.h>
@@ -55,6 +54,11 @@
 #include <ScalarAdvDiffElemKernel.h>
 #include <ScalarUpwAdvDiffElemKernel.h>
 
+// ho
+#include <element_promotion/ElementDescription.h>
+#include <element_promotion/computational_kernels/ScalarMassHOElemKernel.h>
+#include <element_promotion/computational_kernels/ScalarAdvDiffHOElemKernel.h>
+
 // deprecated
 #include <ScalarMassElemSuppAlgDep.h>
 #include <nso/ScalarNSOElemSuppAlgDep.h>
@@ -68,6 +72,7 @@
 #include <user_functions/VariableDensityMixFracSrcNodeSuppAlg.h>
 #include <user_functions/VariableDensityMixFracAuxFunction.h>
 #include <user_functions/RayleighTaylorMixFracAuxFunction.h>
+#include <user_functions/GaussianPulseMixFracAuxFunction.h>
 
 #include <overset/UpdateOversetFringeAlgorithmDriver.h>
 
@@ -330,7 +335,7 @@ MixtureFractionEquationSystem::register_interior_algorithm(
     // include Nodal Mass algorithms
     std::vector<std::string> checkAlgNames = {"mixture_fraction_time_derivative",
                                               "lumped_mixture_fraction_time_derivative"};
-    bool elementMassAlg = kernel_is_requested(checkAlgNames);
+    bool elementMassAlg = supp_alg_is_requested(checkAlgNames);
     std::map<AlgorithmType, SolverAlgorithm *>::iterator itsm =
       solverAlgDriver_->solverAlgMap_.find(algMass);
     if ( itsm == solverAlgDriver_->solverAlgMap_.end() ) {
@@ -427,6 +432,21 @@ MixtureFractionEquationSystem::register_interior_algorithm(
       build_topo_kernel_if_requested<ScalarNSOElemKernel>
         (partTopo, *this, activeKernels, "NSO_4TH_ALT",
          realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, dzdx_, evisc_, 1.0, 1.0, dataPreReqs);
+
+      if (realm_.doPromotion_) {
+        const ElementDescription& desc = *realm_.desc_;
+        int order = desc.polyOrder;
+        int dim = desc.dimension;
+
+        build_topo_kernel_if_requested<ScalarAdvDiffHOElemKernel>
+          (partTopo,  dim, order, *this, activeKernels, "experimental_ho_advection_diffusion",
+           realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, evisc_, desc, dataPreReqs);
+
+        build_topo_kernel_if_requested<ScalarMassHOElemKernel>
+          (partTopo,  dim, order, *this, activeKernels, "experimental_ho_time_derivative",
+           realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, desc, dataPreReqs);
+
+     }
 
       report_invalid_supp_alg_names();
       report_built_supp_alg_names();
@@ -870,6 +890,10 @@ MixtureFractionEquationSystem::register_initial_condition_fcn(
     else if ( fcnName == "RayleighTaylor" ) {
       // create the function
       theAuxFunc = new RayleighTaylorMixFracAuxFunction();      
+    }
+    else if ( fcnName == "GaussianPulse" ) {
+      // create the function
+      theAuxFunc = new GaussianPulseMixFracAuxFunction();
     }
     else {
       throw std::runtime_error("MixtureFractionEquationSystem::register_initial_condition_fcn: VariableDensity only supported");

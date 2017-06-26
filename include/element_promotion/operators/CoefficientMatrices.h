@@ -8,6 +8,7 @@
 #define CoefficientMatrices_h
 
 #include <element_promotion/operators/HighOrderCoefficients.h>
+#include <element_promotion/ElementDescription.h>
 
 namespace sierra {
 namespace nalu{
@@ -44,6 +45,36 @@ struct CoefficientMatrices
   const linear_nodal_matrix_view<p> linear_nodal_interp;
   const linear_scs_matrix_view<p> linear_scs_interp;
 };
+
+namespace internal
+{
+using topo_t = stk::topology::topology_t;
+template <int p, topo_t topo> struct nmap_t { using type = void; };
+template <int p> struct nmap_t<p, stk::topology::QUAD_4_2D> { using type = node_map_view<AlgTraitsQuad<p>>; };
+template <int p, topo_t topo> struct node_map_maker { static typename nmap_t<p,topo>::type make(); };
+
+template <int p> struct node_map_maker<p, stk::topology::QUAD_4_2D>
+{
+  static typename nmap_t<p, stk::topology::QUAD_4_2D>::type make()
+  {
+    node_map_view<AlgTraitsQuad<p>> node_map{"node_map"};
+    auto desc = ElementDescription::create(AlgTraitsQuad<p>::nDim_, AlgTraitsQuad<p>::polyOrder_);
+    for (int j = 0; j < AlgTraitsQuad<p>::nodes1D_; ++j) {
+      for (int i = 0; i < AlgTraitsQuad<p>::nodes1D_; ++i) {
+        node_map(j*AlgTraitsQuad<p>::nodes1D_+i) = desc->node_map(i,j);
+      }
+    }
+    return node_map;
+  }
+};
+
+}
+
+template <int p, stk::topology::topology_t topo> typename internal::nmap_t<p, topo>::type
+make_node_map()
+{
+  return internal::node_map_maker<p, topo>::make();
+}
 
 } // namespace naluUnit
 } // namespace Sierra

@@ -6,8 +6,8 @@
 /*------------------------------------------------------------------------*/
 
 
-#ifndef ScalarAdvDiffHOElemKernel_h
-#define ScalarAdvDiffHOElemKernel_h
+#ifndef ScalarMassHOElemKernel_h
+#define ScalarMassHOElemKernel_h
 
 #include <Kernel.h>
 #include <AlgTraits.h>
@@ -26,39 +26,59 @@ namespace nalu{
 
 class ElemDataRequests;
 class ScratchViews;
-class MasterElement;
 
 template<class AlgTraits>
-class ScalarAdvDiffHOElemKernel final: public Kernel
+class ScalarMassHOElemKernel final : public Kernel
 {
 public:
-  ScalarAdvDiffHOElemKernel(
+  ScalarMassHOElemKernel(
     const stk::mesh::BulkData& bulkData,
     SolutionOptions& solnOpts,
     ScalarFieldType *scalarQ,
-    ScalarFieldType *diffFluxCoeff,
     const ElementDescription& desc,
     ElemDataRequests& dataPreReqs);
+
+  void setup(const TimeIntegrator& timeIntegrator) final;
 
   void execute(
     SharedMemView<double**>& lhs,
     SharedMemView<double*>& rhs,
     ScratchViews& scratchViews) final;
+
 private:
-  ScalarFieldType *scalarQ_{nullptr};
-  ScalarFieldType *diffFluxCoeff_{nullptr};
-  VectorFieldType *coordinates_{nullptr};
-  VectorFieldType* velocity_{nullptr};
-  ScalarFieldType* density_{nullptr};
+  void mapped_gather();
+
+  ScalarFieldType* scalarNm1_{nullptr};
+  ScalarFieldType* scalarN_{nullptr};
+  ScalarFieldType* scalarNp1_{nullptr};
+
+  ScalarFieldType* densityNm1_{nullptr};
+  ScalarFieldType* densityN_{nullptr};
+  ScalarFieldType* densityNp1_{nullptr};
+
+
+  VectorFieldType* coordinates_{nullptr};
+
+
+  double dt_{0.0};
+  double gamma1_{0.0};
+  double gamma2_{0.0};
+  double gamma3_{0.0};
 
   CVFEMOperators<AlgTraits::polyOrder_, AlgTraits::baseTopo_> ops_{};
   node_map_view<AlgTraits> v_node_map_{ make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>() };
-  nodal_scalar_view<AlgTraits> v_diff_{"scalar_ho_diffusion_coeff"};
-  nodal_scalar_view<AlgTraits> v_scalar_{"scalar_ho_q"};
+
+  nodal_scalar_view<AlgTraits> v_scalarNm1_{"scalarnm1"};
+  nodal_scalar_view<AlgTraits> v_scalarNp0_{"scalarn"};
+  nodal_scalar_view<AlgTraits> v_scalarNp1_{"scalarnp1"};
+
+  nodal_scalar_view<AlgTraits> v_rhoNm1_{"rhonm1"};
+  nodal_scalar_view<AlgTraits> v_rhoNp0_{"rhon"};
+  nodal_scalar_view<AlgTraits> v_rhoNp1_{"rhonp1"};
+
   nodal_vector_view<AlgTraits> v_coords_{"coords"};
-  nodal_vector_view<AlgTraits> v_rhou_{"rhou"};
-  scs_vector_view<AlgTraits> v_adv_metric_{"adv_metric"};
-  scs_tensor_view<AlgTraits> v_diff_metric_{"diff_metric"};
+  nodal_scalar_view<AlgTraits> v_vol_{"volume_metric"};
+  nodal_scalar_view<AlgTraits> v_time_derivative_{"dqdt"};
   matrix_view<AlgTraits> v_lhs_{"scalar_ho_advdiff_lhs"};
   nodal_scalar_view<AlgTraits> v_rhs_{"scalar_ho_advdiff_rhs"};
 };

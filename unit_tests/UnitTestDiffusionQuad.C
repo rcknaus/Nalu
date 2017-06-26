@@ -215,9 +215,7 @@ namespace {
     EXPECT_VIEW_NEAR_2D(exact_laplacian, numerical_laplacian, 1.0e-8);
   }
 }
-
 //--------------------------------------------------------------
-#define TEST_POLY(x,y,z)  TEST(x, y##_##order_##z) { y<z>(); }
 TEST_POLY(QuadDiffusion, check_volume_metric, 42);
 TEST_POLY(QuadDiffusion, check_diffusion, 42);
 

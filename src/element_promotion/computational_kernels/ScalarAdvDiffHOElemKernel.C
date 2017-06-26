@@ -5,11 +5,12 @@
 /*  directory structure                                                   */
 /*------------------------------------------------------------------------*/
 
-
 #include <element_promotion/computational_kernels/ScalarAdvDiffHOElemKernel.h>
 
 #include <element_promotion/operators/HighOrderAdvectionDiffusionQuad.h>
 #include <element_promotion/operators/HighOrderGeometryQuadDiffusion.h>
+#include <element_promotion/operators/HighOrderGeometryQuadAdvection.h> // advection-diffusion metric instead?
+#include <element_promotion/operators/MappedElementMatrixScatter.h>
 #include <element_promotion/operators/CoefficientMatrices.h>
 #include <element_promotion/operators/DirectionEnums.h>
 #include <element_promotion/ElementDescription.h>
@@ -18,6 +19,7 @@
 #include <SolutionOptions.h>
 #include <FieldTypeDef.h>
 #include <Realm.h>
+#include <AlgTraits.h>
 
 // template and scratch space
 #include <BuildTemplates.h>
@@ -27,6 +29,8 @@
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/Field.hpp>
+
+#include <Teuchos_BLAS.hpp>
 
 // topology
 #include <stk_topology/topology.hpp>
@@ -52,85 +56,82 @@ ScalarAdvDiffHOElemKernel<AlgTraits>::ScalarAdvDiffHOElemKernel(
   // save off fields
   const stk::mesh::MetaData& meta_data = bulkData.mesh_meta_data();
   coordinates_ = meta_data.get_field<VectorFieldType>(stk::topology::NODE_RANK, solnOpts.get_coordinates_name());
-  massFlowRate_ = meta_data.get_field<GenericFieldType>(stk::topology::ELEMENT_RANK, "mass_flow_rate_scs");
-
-  // map from "exodus-style" node ordering to usual tensor-product based node ordering.
-  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-      v_node_map_(j*AlgTraits::nodes1D_+i) = desc.node_map(i,j);
-    }
-  }
+  velocity_ = meta_data.get_field<VectorFieldType>(stk::topology::NODE_RANK, "velocity");
+  density_ = meta_data.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "density");
 
   // only necessary for correctly sizing scratch views
   dataPreReqs.add_cvfem_surface_me(get_surface_master_element(AlgTraits::topo_));
-  dataPreReqs.add_element_field(*massFlowRate_, AlgTraits::numScsIp_);
 
+  dataPreReqs.add_gathered_nodal_field(*velocity_, AlgTraits::nDim_);
+  dataPreReqs.add_gathered_nodal_field(*density_, 1);
   dataPreReqs.add_gathered_nodal_field(*coordinates_, AlgTraits::nDim_);
   dataPreReqs.add_gathered_nodal_field(*scalarQ, 1);
   dataPreReqs.add_gathered_nodal_field(*diffFluxCoeff, 1);
 }
 //--------------------------------------------------------------------------
-template<class AlgTraits> void
+template <class AlgTraits> void
 ScalarAdvDiffHOElemKernel<AlgTraits>::execute(
   SharedMemView<double **>& lhs,
   SharedMemView<double *>& rhs,
   ScratchViews& scratchViews)
 {
+  constexpr int npe = AlgTraits::nodesPerElement_;
+  constexpr int n1D = AlgTraits::nodes1D_;
+  constexpr int poly_order = AlgTraits::polyOrder_;
+
   SharedMemView<double**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
   SharedMemView<double*> v_flatScalar = scratchViews.get_scratch_view_1D(*scalarQ_);
   SharedMemView<double*> v_flatDiff  = scratchViews.get_scratch_view_1D(*diffFluxCoeff_);
-  SharedMemView<double*> v_flatMdot = scratchViews.get_scratch_view_1D(*massFlowRate_);
+  SharedMemView<double**> v_flatVelocity = scratchViews.get_scratch_view_2D(*velocity_);
+  SharedMemView<double*> v_flatDensity = scratchViews.get_scratch_view_1D(*density_);
 
   // reorder fields into the ordering expected by the alg
-  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-      int nodeId = v_node_map_(j*AlgTraits::nodes1D_+i);
+  for (int j = 0; j < n1D; ++j) {
+    for (int i = 0; i < n1D; ++i) {
+      int nodeId = v_node_map_(j*n1D+i);
       v_scalar_(j,i) = v_flatScalar(nodeId);
-      v_diff_(j,i)   = v_flatDiff(nodeId);
+      v_diff_(j,i)   = 1.0e-10;
       for (int d = 0; d < AlgTraits::nDim_; ++d) {
         v_coords_(d,j,i) = v_flatCoords(nodeId, d);
+        v_rhou_(d,j,i) = v_flatVelocity(nodeId, d) * v_flatDensity(nodeId);
       }
     }
   }
+//
+  Kokkos::deep_copy(v_lhs_, 0.0);
+  Kokkos::deep_copy(v_rhs_, 0.0);
+//
+//  // fixme(rcknaus): can't just interpolate the current rhou.  Need a templated mdot calculation +
+//  // which requires a strategy for dealing with nonsolver entities
+  high_order_metrics::compute_diffusion_metric_linear(ops_, v_coords_, v_diff_, v_diff_metric_);
+  high_order_metrics::compute_advection_metric_linear(ops_, v_coords_, v_rhou_, v_adv_metric_);
 
-  for (int p = 0; p < AlgTraits::nscs_; ++p) {
-    for (int n = 0; n < AlgTraits::nodes1D_; ++n) {
-      v_mdot_(0, p, n) = v_flatMdot(p*AlgTraits::nodes1D_ + n);
-      v_mdot_(1, p, n) = v_flatMdot(p*AlgTraits::nodes1D_ + n + AlgTraits::nodes1D_ * AlgTraits::nscs_);
+  Kokkos::deep_copy(v_adv_metric_,0.0);
+
+//  Kokkos::deep_copy(v_adv_metric_ , 0.0);
+
+  for (int j = 0; j < n1D-1; ++j) {
+    for (int i = 0; i < n1D-1; ++i) {
+      v_adv_metric_(XH,j,i) =  1.0/16.0;
+//      std::cout << "adv: (" << v_adv_metric_(XH,j,i) << ", " << v_adv_metric_(YH,j,i)  << ")" << std::endl;
     }
   }
 
-  Kokkos::deep_copy(v_lhs_, 0.0);
-  Kokkos::deep_copy(v_rhs_, 0.0);
-
-  // todo(rcknaus): specialized, high order mdot calculation
-  // for now, just use default mdot calc
-  high_order_metrics::compute_diffusion_metric_linear(ops_, v_coords_, v_diff_, v_diff_metric_);
-  tensor_assembly::elemental_advection_diffusion_jacobian(ops_, v_mdot_, v_diff_metric_, v_lhs_);
-
-  //  tensor_assembly::elemental_advection_diffusion_action(ops_, v_diff_metric_, v_scalar_, v_rhs_);
+  tensor_assembly::elemental_advection_diffusion_jacobian(ops_, v_adv_metric_, v_diff_metric_, v_lhs_);
+//  tensor_assembly::elemental_advection_diffusion_action(ops_, v_adv_metric_, v_diff_metric_, v_scalar_, v_rhs_);
+//
   Teuchos::BLAS<int, typename matrix_view<AlgTraits>::value_type>().GEMV(
     Teuchos::TRANS, // row v column
-    AlgTraits::nodesPerElement_, AlgTraits::nodesPerElement_,
+    npe, npe,
     -1.0,
-    v_lhs_.ptr_on_device(), AlgTraits::nodesPerElement_,
-    v_lhs_.ptr_on_device(), 1,
+    v_lhs_.ptr_on_device(), npe,
+    v_scalar_.ptr_on_device(), 1,
     +1.0,
     v_rhs_.ptr_on_device(), 1
   );
 
-  // map lhs/rhs back to the usual ordering
-  for (int j = 0; j < AlgTraits::nodesPerElement_; ++j) {
-    for (int i = 0; i < AlgTraits::nodesPerElement_; ++i) {
-      lhs(v_node_map_(j), v_node_map_(i)) += v_lhs_(j,i);
-    }
-  }
-
-  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-      rhs(v_node_map_(j*AlgTraits::nodes1D_+i)) += v_rhs_(j,i);
-    }
-  }
+  tensor_assembly::mapped_scatter<poly_order>(v_node_map_, v_lhs_, v_rhs_, lhs, rhs);
+//  ThrowRequire(false);
 }
 
 INSTANTIATE_HOQUAD_ALGORITHM(ScalarAdvDiffHOElemKernel)

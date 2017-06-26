@@ -60,6 +60,7 @@
 
 #include <element_promotion/ElementDescription.h>
 #include <element_promotion/computational_kernels/ScalarDiffHOElemKernel.h>
+#include <element_promotion/computational_kernels/ScalarAdvDiffHOElemKernel.h>
 #include <user_functions/SteadyThermalContactSrcHOElemKernel.h>
 
 // user functions
@@ -407,6 +408,11 @@ HeatCondEquationSystem::register_interior_algorithm(
           partTopo, dim, order, *this, activeKernels, "experimental_ho_quad_mms_source",
           realm_.bulk_data(),  *realm_.solutionOptions_, desc, dataPreReqs
         );
+
+
+        build_topo_kernel_if_requested<ScalarAdvDiffHOElemKernel>(
+          partTopo,  dim, order, *this, activeKernels, "experimental_ho_advection_diffusion",
+                   realm_.bulk_data(), *realm_.solutionOptions_, temperature_, thermalCond_, desc, dataPreReqs);
       }
 
       report_invalid_supp_alg_names();

@@ -73,8 +73,8 @@ public:
     nodal_vector_view<ElemTraits> fIp) const
   {
     // interpolates f to the scs of constant xhat coordinate
-    internal::apply_x<poly_order>(mat_.scsInterp, f, Kokkos::subview(fIp, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::apply_x<poly_order>(mat_.scsInterp, f, Kokkos::subview(fIp, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_x<poly_order>(mat_.scsInterp, Kokkos::subview(f, 0, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 0, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_x<poly_order>(mat_.scsInterp, Kokkos::subview(f, 1, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 1, Kokkos::ALL, Kokkos::ALL));
   }
   //--------------------------------------------------------------------------
   void scs_yhat_interp(
@@ -82,8 +82,8 @@ public:
     nodal_vector_view<ElemTraits> fIp) const
   {
     // interpolates f to the scs of constant yhat coordinate
-    internal::apply_y<poly_order>(mat_.scsInterp, f, Kokkos::subview(fIp, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::apply_y<poly_order>(mat_.scsInterp, f, Kokkos::subview(fIp, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_y<poly_order>(mat_.scsInterp, Kokkos::subview(f, 0, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 0, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_y<poly_order>(mat_.scsInterp, Kokkos::subview(f, 1, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 1, Kokkos::ALL, Kokkos::ALL));
   }
   //--------------------------------------------------------------------------
   void volume_xhat(

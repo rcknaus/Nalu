@@ -26,47 +26,47 @@ namespace sierra { namespace nalu {
   using ViewType = Kokkos::View<ArrayType>;
 
  //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using nodal_scalar_array = Scalar[ElemTraits::nodes1D_][ElemTraits::nodes1D_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using nodal_scalar_array = Scalar[AlgTraits::nodes1D_][AlgTraits::nodes1D_];
   
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using nodal_scalar_view = ViewType<nodal_scalar_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using nodal_scalar_view = ViewType<nodal_scalar_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using nodal_vector_array = Scalar[ElemTraits::nDim_][ElemTraits::nodes1D_][ElemTraits::nodes1D_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using nodal_vector_array = Scalar[AlgTraits::nDim_][AlgTraits::nodes1D_][AlgTraits::nodes1D_];
 
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using nodal_vector_view = ViewType<nodal_vector_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using nodal_vector_view = ViewType<nodal_vector_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using nodal_tensor_array = Scalar[ElemTraits::nDim_][ElemTraits::nDim_][ElemTraits::nodes1D_][ElemTraits::nodes1D_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using nodal_tensor_array = Scalar[AlgTraits::nDim_][AlgTraits::nDim_][AlgTraits::nodes1D_][AlgTraits::nodes1D_];
 
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using nodal_tensor_view = ViewType<nodal_tensor_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using nodal_tensor_view = ViewType<nodal_tensor_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using scs_scalar_array = Scalar[ElemTraits::nscs_][ElemTraits::nodes1D_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using scs_scalar_array = Scalar[AlgTraits::nscs_][AlgTraits::nodes1D_];
 
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using scs_scalar_view = ViewType<scs_scalar_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using scs_scalar_view = ViewType<scs_scalar_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using scs_vector_array = Scalar[ElemTraits::nDim_][ElemTraits::nscs_][ElemTraits::nodes1D_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using scs_vector_array = Scalar[AlgTraits::nDim_][AlgTraits::nscs_][AlgTraits::nodes1D_];
 
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using scs_vector_view = ViewType<scs_vector_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using scs_vector_view = ViewType<scs_vector_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using scs_tensor_array = Scalar[ElemTraits::nDim_][ElemTraits::nDim_][ElemTraits::nscs_][ElemTraits::nodes1D_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using scs_tensor_array = Scalar[AlgTraits::nDim_][AlgTraits::nDim_][AlgTraits::nscs_][AlgTraits::nodes1D_];
 
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using scs_tensor_view = ViewType<scs_tensor_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using scs_tensor_view = ViewType<scs_tensor_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using matrix_array = Scalar[ElemTraits::nodesPerElement_][ElemTraits::nodesPerElement_];
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using matrix_array = Scalar[AlgTraits::nodesPerElement_][AlgTraits::nodesPerElement_];
 
-  template <typename ElemTraits, typename Scalar = default_float_type>
-  using matrix_view = ViewType<matrix_array<ElemTraits,Scalar>>;
+  template <typename AlgTraits, typename Scalar = default_float_type>
+  using matrix_view = ViewType<matrix_array<AlgTraits,Scalar>>;
   //--------------------------------------------------------------------------
   template <int poly_order, typename Scalar = default_float_type>
   using nodal_matrix_array = Scalar[poly_order+1][poly_order+1];
@@ -92,6 +92,12 @@ namespace sierra { namespace nalu {
   template <int poly_order, typename Scalar = default_float_type>
   using linear_scs_matrix_view = ViewType<linear_scs_matrix_array<poly_order, Scalar>>;
   //--------------------------------------------------------------------------
+  template <typename AlgTraits, typename IntegralScalar = int>
+  using node_map_array = IntegralScalar[AlgTraits::nodesPerElement_];
+
+  template <typename AlgTraits, typename IntegralScalar = int>
+  using node_map_view = ViewType<node_map_array<AlgTraits,IntegralScalar>>;
+
 } // namespace nalu
 } // namespace Sierra
 

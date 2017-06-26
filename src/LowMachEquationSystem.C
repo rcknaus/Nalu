@@ -607,7 +607,7 @@ LowMachEquationSystem::solve_and_update()
     continuityEqSys_->timerMisc_ += (timeB-timeA);
     isInit_ = false;
   }
-  
+
   // compute tvisc
   momentumEqSys_->tviscAlgDriver_->execute();
 
@@ -633,7 +633,7 @@ LowMachEquationSystem::solve_and_update()
       realm_.get_activate_aura());
     timeB = NaluEnv::self().nalu_time();
     momentumEqSys_->timerAssemble_ += (timeB-timeA);
-    
+
     // compute velocity relative to mesh with new velocity
     realm_.compute_vrtm();
 
@@ -650,7 +650,7 @@ LowMachEquationSystem::solve_and_update()
       realm_.get_activate_aura());
     timeB = NaluEnv::self().nalu_time();
     continuityEqSys_->timerAssemble_ += (timeB-timeA);
-    
+
     // compute mdot
     timeA = NaluEnv::self().nalu_time();
     continuityEqSys_->computeMdotAlgDriver_->execute();
@@ -1244,7 +1244,7 @@ MomentumEquationSystem::register_interior_algorithm(
   // include Nodal Mass algorithms
   std::vector<std::string> checkAlgNames = {"momentum_time_derivative",
                                             "lumped_momentum_time_derivative"};
-  bool elementMassAlg = kernel_is_requested(checkAlgNames);
+  bool elementMassAlg = supp_alg_is_requested(checkAlgNames);
   // solver; time contribution (lumped mass matrix)
   if ( !elementMassAlg || nodal_src_is_requested() ) {
     std::map<AlgorithmType, SolverAlgorithm *>::iterator itsm =

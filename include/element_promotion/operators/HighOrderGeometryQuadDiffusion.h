@@ -91,7 +91,7 @@ namespace high_order_metrics
          { coord(XH, p, 0) - coord(XH, 0, 0), coord(YH, p, 0) - coord(YH, 0, 0) },
          { coord(XH, p, p) - coord(XH, p, 0), coord(YH, p, p) - coord(YH, p, 0) },
          { coord(XH, 0, p) - coord(XH, p, p), coord(YH, 0, p) - coord(YH, p, p) },
-         { coord(XH, 0, 0) - coord(XH, 0, p), coord(YH, 0, 0) - coord(YH, 0, p) },
+         { coord(XH, 0, 0) - coord(XH, 0, p), coord(YH, 0, 0) - coord(YH, 0, p) }
     };
 
     const auto scs_interp = ops.mat_.linear_scs_interp;

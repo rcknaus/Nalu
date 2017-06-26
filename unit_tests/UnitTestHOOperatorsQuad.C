@@ -249,8 +249,6 @@ template <int p> void scs_integration_quad()
 
 }//namespace
 
-#define TEST_POLY(x,y,z)  TEST(x, y##_##order_##z) { y<z>(); }
-
 TEST_POLY(HOOperators, scs_interp_quad, 42);
 TEST_POLY(HOOperators, scs_grad_quad, 42);
 TEST_POLY(HOOperators, nodal_grad_quad, 42);
