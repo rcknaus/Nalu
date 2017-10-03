@@ -38,13 +38,12 @@ public:
     SolutionOptions& solnOpts,
     ScalarFieldType *scalarQ,
     ScalarFieldType *diffFluxCoeff,
-    const ElementDescription& desc,
     ElemDataRequests& dataPreReqs);
 
   void execute(
     SharedMemView<double**>& lhs,
     SharedMemView<double*>& rhs,
-    ScratchViews& scratchViews) final;
+    ScratchViews<double>& scratchViews) final;
 
 private:
   ScalarFieldType *scalarQ_;

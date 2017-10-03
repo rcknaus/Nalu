@@ -439,14 +439,14 @@ MixtureFractionEquationSystem::register_interior_algorithm(
         int dim = desc.dimension;
 
         build_topo_kernel_if_requested<ScalarAdvDiffHOElemKernel>
-          (partTopo,  dim, order, *this, activeKernels, "experimental_ho_advection_diffusion",
-           realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, evisc_, desc, dataPreReqs);
+        (partTopo,  *this, activeKernels, "experimental_ho_advection_diffusion",
+          realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, evisc_, desc, dataPreReqs);
 
         build_topo_kernel_if_requested<ScalarMassHOElemKernel>
-          (partTopo,  dim, order, *this, activeKernels, "experimental_ho_time_derivative",
-           realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, desc, dataPreReqs);
+        (partTopo,  *this, activeKernels, "experimental_ho_time_derivative",
+          realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, desc, dataPreReqs);
 
-     }
+      }
 
       report_invalid_supp_alg_names();
       report_built_supp_alg_names();

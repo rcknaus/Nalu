@@ -18,7 +18,7 @@ inline Teuchos::ETransp char_to_teuchos_enum(char x) {
   return (x == 'N') ? Teuchos::NO_TRANS : Teuchos::TRANS;
 }
 
-template <typename ViewTypeA, typename ViewTypeB, typename ViewTypeC>
+template <int poly_order, typename ViewTypeA, typename ViewTypeB, typename ViewTypeC>
 void gemm_nxn(
   char transA,
   char transB,
@@ -33,8 +33,20 @@ void gemm_nxn(
   ThrowAssertMsg(B.is_contiguous(), "B must be contiguous");
   ThrowAssertMsg(C.is_contiguous(), "C must be contiguous");
 
-  static_assert(std::is_same<typename ViewTypeA::value_type, typename ViewTypeB::value_type>::value,
-    "Types don't match");
+  static_assert(
+    std::is_same<typename ViewTypeA::value_type,
+                 typename ViewTypeB::value_type>::value,
+      "Types don't match");
+
+
+
+  for (int k = 0; k < n; ++k) {
+
+  }
+
+
+
+
 
   int n = A.dimension_0();
   Teuchos::BLAS<int, typename ViewTypeA::value_type>().GEMM(
@@ -44,16 +56,23 @@ void gemm_nxn(
     beta, C.ptr_on_device(), n);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void apply_x(
   const nodal_matrix_view<poly_order> coeffMatrix,
   const ViewTypeIn in,
   ViewTypeOut out)
 {
-  gemm_nxn('T', 'N', 1.0, coeffMatrix, in, 0.0, out);
+  for (int j = 0; j < poly_order; ++j) {
+    for (int i = 0; i < poly_order; ++i) {
+  }
+
+
+
+
+  gemm_nxn<poly_order>('T', 'N', 1.0, coeffMatrix, in, 0.0, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void apply_y(
   const nodal_matrix_view<poly_order> coeffMatrix,
   const ViewTypeIn in,
@@ -62,7 +81,7 @@ void apply_y(
   gemm_nxn('N', 'N', 1.0,  in, coeffMatrix, 0.0, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewType>
+template <int poly_order, typename ViewType>
 void apply_yx(
   const nodal_matrix_view<poly_order> coeffMatrix1,
   const nodal_matrix_view<poly_order> coeffMatrix2,
@@ -74,7 +93,7 @@ void apply_yx(
   gemm_nxn('T', 'N', 1.0, coeffMatrix2, temp, 1.0, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order>
+template <int poly_order>
 void apply_xy(
   const nodal_matrix_view<poly_order> coeffMatrix1,
   const nodal_matrix_view<poly_order> coeffMatrix2,
@@ -86,7 +105,7 @@ void apply_xy(
   gemm_nxn('T', 'N', 1.0, coeffMatrix2, temp, 1.0, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void Dx(
   const nodal_matrix_view<poly_order> nodalDeriv,
   const ViewTypeIn in,
@@ -95,7 +114,7 @@ void Dx(
   apply_x<poly_order>(nodalDeriv, in, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void Dy(
   const nodal_matrix_view<poly_order> nodalDeriv,
   const ViewTypeIn in,
@@ -104,7 +123,7 @@ void Dy(
   apply_y<poly_order>(nodalDeriv, in, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void I_xhat(
   const nodal_matrix_view<poly_order> scsInterp,
   const ViewTypeIn in,
@@ -113,7 +132,7 @@ void I_xhat(
    apply_x<poly_order>(scsInterp, in, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void I_yhat(
   const nodal_matrix_view<poly_order> scsInterp,
   const ViewTypeIn in,
@@ -122,7 +141,7 @@ void I_yhat(
    apply_y<poly_order>(scsInterp, in, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void Dx_xhat(
   const nodal_matrix_view<poly_order> scsDeriv,
   const ViewTypeIn in,
@@ -131,7 +150,7 @@ void Dx_xhat(
   apply_x<poly_order>(scsDeriv, in, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void Dy_xhat(
   const nodal_matrix_view<poly_order> scsInterp,
   const nodal_matrix_view<poly_order> nodalDeriv,
@@ -143,7 +162,7 @@ void Dy_xhat(
   apply_y<poly_order>(nodalDeriv, temp, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void Dx_yhat(
   const nodal_matrix_view<poly_order> scsInterp,
   const nodal_matrix_view<poly_order> nodalDeriv,
@@ -155,7 +174,7 @@ void Dx_yhat(
   apply_x<poly_order>(nodalDeriv, temp, out);
 }
 //--------------------------------------------------------------------------
-template <unsigned poly_order, typename ViewTypeIn, typename ViewTypeOut>
+template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
 void Dy_yhat(
   const nodal_matrix_view<poly_order> scsDeriv,
   const ViewTypeIn in,

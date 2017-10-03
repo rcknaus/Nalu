@@ -43,6 +43,12 @@ template class ClassName<AlgTraitsQuadGL<3>>;                    \
 template class ClassName<AlgTraitsQuadGL<4>>;                    \
 template class ClassName<AlgTraitsQuadGL<USER_POLY_ORDER>>;      \
 
+#define INSTANTIATE_KERNEL_2D_HOSGL(ClassName)                      \
+template class ClassName<AlgTraitsQuad<2>>;                    \
+template class ClassName<AlgTraitsQuad<3>>;                    \
+template class ClassName<AlgTraitsQuad<4>>;                    \
+template class ClassName<AlgTraitsQuad<USER_POLY_ORDER>>;      \
+
 #define INSTANTIATE_KERNEL(ClassName)           \
   INSTANTIATE_KERNEL_3D(ClassName)              \
   INSTANTIATE_KERNEL_2D(ClassName)              \

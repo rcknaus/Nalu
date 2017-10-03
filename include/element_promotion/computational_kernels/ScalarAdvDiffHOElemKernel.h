@@ -37,7 +37,7 @@ public:
     SolutionOptions& solnOpts,
     ScalarFieldType *scalarQ,
     ScalarFieldType *diffFluxCoeff,
-    const ElementDescription& desc,
+    const ElementDescription* desc,
     ElemDataRequests& dataPreReqs);
 
   void execute(

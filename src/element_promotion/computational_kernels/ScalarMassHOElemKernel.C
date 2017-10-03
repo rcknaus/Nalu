@@ -46,7 +46,6 @@ ScalarMassHOElemKernel<AlgTraits>::ScalarMassHOElemKernel(
   const stk::mesh::BulkData& bulkData,
   SolutionOptions& solnOpts,
   ScalarFieldType *scalarQ,
-  const ElementDescription& desc,
   ElemDataRequests& dataPreReqs)
   : Kernel()
 {
@@ -97,7 +96,7 @@ template <class AlgTraits> void
 ScalarMassHOElemKernel<AlgTraits>::execute(
   SharedMemView<double **>& lhs,
   SharedMemView<double *>& rhs,
-  ScratchViews& scratchViews)
+  ScratchViews<double>& scratchViews)
 {
   constexpr int n1D = AlgTraits::nodes1D_;
   constexpr int poly_order = AlgTraits::polyOrder_;
@@ -161,7 +160,7 @@ ScalarMassHOElemKernel<AlgTraits>::execute(
   tensor_assembly::mapped_scatter<poly_order>(v_node_map_, v_lhs_, v_rhs_, lhs, rhs);
 }
 
-INSTANTIATE_HOQUAD_ALGORITHM(ScalarMassHOElemKernel)
+INSTANTIATE_KERNEL_2D_HOSGL(ScalarMassHOElemKernel)
 
 } // namespace nalu
 } // namespace Sierra

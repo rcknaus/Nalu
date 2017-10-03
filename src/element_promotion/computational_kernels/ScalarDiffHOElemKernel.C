@@ -44,7 +44,6 @@ ScalarDiffHOElemKernel<AlgTraits>::ScalarDiffHOElemKernel(
   SolutionOptions& solnOpts,
   ScalarFieldType *scalarQ,
   ScalarFieldType *diffFluxCoeff,
-  const ElementDescription& desc,
   ElemDataRequests& dataPreReqs)
   : Kernel(),
     scalarQ_(scalarQ),
@@ -65,7 +64,7 @@ template <class AlgTraits> void
 ScalarDiffHOElemKernel<AlgTraits>::execute(
   SharedMemView<double **>& lhs,
   SharedMemView<double *>& rhs,
-  ScratchViews& scratchViews)
+  ScratchViews<double>& scratchViews)
 {
   constexpr int poly_order = AlgTraits::polyOrder_;
 
@@ -100,11 +99,10 @@ ScalarDiffHOElemKernel<AlgTraits>::execute(
   high_order_metrics::compute_diffusion_metric_linear(ops_, v_coords_, v_diff_, v_metric_);
   tensor_assembly::elemental_diffusion_jacobian(ops_, v_metric_, v_lhs_);
   tensor_assembly::elemental_diffusion_action(ops_, v_metric_, v_scalar_, v_rhs_);
-
   tensor_assembly::mapped_scatter<poly_order>(v_node_map_, v_lhs_, v_rhs_, lhs, rhs);
 }
 
-INSTANTIATE_HOQUAD_ALGORITHM(ScalarDiffHOElemKernel)
+INSTANTIATE_KERNEL_2D_HOSGL(ScalarDiffHOElemKernel)
 
 } // namespace nalu
 } // namespace Sierra

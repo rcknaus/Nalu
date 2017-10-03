@@ -25,7 +25,6 @@ namespace sierra{
 namespace nalu{
 
 class ElemDataRequests;
-class ScratchViews;
 
 template<class AlgTraits>
 class ScalarMassHOElemKernel final : public Kernel
@@ -35,7 +34,6 @@ public:
     const stk::mesh::BulkData& bulkData,
     SolutionOptions& solnOpts,
     ScalarFieldType *scalarQ,
-    const ElementDescription& desc,
     ElemDataRequests& dataPreReqs);
 
   void setup(const TimeIntegrator& timeIntegrator) final;
@@ -43,7 +41,7 @@ public:
   void execute(
     SharedMemView<double**>& lhs,
     SharedMemView<double*>& rhs,
-    ScratchViews& scratchViews) final;
+    ScratchViews<double>& scratchViews) final;
 
 private:
   void mapped_gather();
@@ -56,9 +54,7 @@ private:
   ScalarFieldType* densityN_{nullptr};
   ScalarFieldType* densityNp1_{nullptr};
 
-
   VectorFieldType* coordinates_{nullptr};
-
 
   double dt_{0.0};
   double gamma1_{0.0};

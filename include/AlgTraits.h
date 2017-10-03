@@ -87,7 +87,6 @@ struct AlgTraitsTri3_2D {
   static constexpr stk::topology::topology_t topo_ = stk::topology::TRI_3_2D;
 };
 
-<<<<<<< HEAD
 template <int p> constexpr int nGL() { return (p % 2 == 0) ? p / 2 + 1 : (p + 1) / 2; }
 
 template <int p>
