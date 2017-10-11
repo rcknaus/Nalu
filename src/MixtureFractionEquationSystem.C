@@ -51,13 +51,12 @@
 // consolidated
 #include <AssembleElemSolverAlgorithm.h>
 #include <ScalarMassElemKernel.h>
-#include <ScalarAdvDiffElemKernel.h>
+#include <DiffElemKernel.h>
 #include <ScalarUpwAdvDiffElemKernel.h>
 
 // ho
 #include <element_promotion/ElementDescription.h>
 #include <element_promotion/computational_kernels/ScalarMassHOElemKernel.h>
-#include <element_promotion/computational_kernels/ScalarAdvDiffHOElemKernel.h>
 
 // deprecated
 #include <ScalarMassElemSuppAlgDep.h>
@@ -432,21 +431,6 @@ MixtureFractionEquationSystem::register_interior_algorithm(
       build_topo_kernel_if_requested<ScalarNSOElemKernel>
         (partTopo, *this, activeKernels, "NSO_4TH_ALT",
          realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, dzdx_, evisc_, 1.0, 1.0, dataPreReqs);
-
-      if (realm_.doPromotion_) {
-        const ElementDescription& desc = *realm_.desc_;
-        int order = desc.polyOrder;
-        int dim = desc.dimension;
-
-        build_topo_kernel_if_requested<ScalarAdvDiffHOElemKernel>
-        (partTopo,  *this, activeKernels, "experimental_ho_advection_diffusion",
-          realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, evisc_, desc, dataPreReqs);
-
-        build_topo_kernel_if_requested<ScalarMassHOElemKernel>
-        (partTopo,  *this, activeKernels, "experimental_ho_time_derivative",
-          realm_.bulk_data(), *realm_.solutionOptions_, mixFrac_, desc, dataPreReqs);
-
-      }
 
       report_invalid_supp_alg_names();
       report_built_supp_alg_names();

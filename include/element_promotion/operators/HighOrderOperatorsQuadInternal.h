@@ -10,6 +10,8 @@
 #include <Teuchos_BLAS.hpp>
 #include <element_promotion/CVFEMTypeDefs.h>
 
+#include <Tpetra_Details_gemm.hpp>
+
 namespace sierra {
 namespace nalu {
 namespace internal {
@@ -23,37 +25,18 @@ void gemm_nxn(
   char transA,
   char transB,
   double alpha,
-  const ViewTypeA A,
-  const ViewTypeB B,
+  const ViewTypeA& A,
+  const ViewTypeB& B,
   double beta,
-  ViewTypeC C)
+  ViewTypeC& C)
 {
   // Kokkos-Kernels gemm currently has a message, "do not use"
-  ThrowAssertMsg(A.is_contiguous(), "A must be contiguous");
-  ThrowAssertMsg(B.is_contiguous(), "B must be contiguous");
-  ThrowAssertMsg(C.is_contiguous(), "C must be contiguous");
-
   static_assert(
     std::is_same<typename ViewTypeA::value_type,
                  typename ViewTypeB::value_type>::value,
       "Types don't match");
 
-
-
-  for (int k = 0; k < n; ++k) {
-
-  }
-
-
-
-
-
-  int n = A.dimension_0();
-  Teuchos::BLAS<int, typename ViewTypeA::value_type>().GEMM(
-    char_to_teuchos_enum(transA), char_to_teuchos_enum(transB),
-    n, n, n,
-    alpha, A.ptr_on_device(), n, B.ptr_on_device(), n,
-    beta, C.ptr_on_device(), n);
+  Tpetra::Details::Blas::gemm(transA, transB, alpha, A, B, beta, C);
 }
 //--------------------------------------------------------------------------
 template <int poly_order, typename ViewTypeIn, typename ViewTypeOut>
@@ -62,13 +45,6 @@ void apply_x(
   const ViewTypeIn in,
   ViewTypeOut out)
 {
-  for (int j = 0; j < poly_order; ++j) {
-    for (int i = 0; i < poly_order; ++i) {
-  }
-
-
-
-
   gemm_nxn<poly_order>('T', 'N', 1.0, coeffMatrix, in, 0.0, out);
 }
 //--------------------------------------------------------------------------

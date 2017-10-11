@@ -20,7 +20,7 @@
 
 namespace sierra { namespace nalu {
 
-  using default_float_type = double;
+  using default_float_type = DoubleType;
 
   template <typename ArrayType>
   using ViewType = Kokkos::View<ArrayType>;

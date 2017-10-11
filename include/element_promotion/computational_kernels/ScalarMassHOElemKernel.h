@@ -19,7 +19,7 @@
 #include <stk_mesh/base/Entity.hpp>
 
 // Kokkos
-#include <Kokkos_Core.hpp>
+#include <KokkosInterface.h>
 
 namespace sierra{
 namespace nalu{
@@ -39,13 +39,11 @@ public:
   void setup(const TimeIntegrator& timeIntegrator) final;
 
   void execute(
-    SharedMemView<double**>& lhs,
-    SharedMemView<double*>& rhs,
-    ScratchViews<double>& scratchViews) final;
+    SharedMemView<DoubleType**>&,
+    SharedMemView<DoubleType*>&,
+    ScratchViews<DoubleType>&) final;
 
 private:
-  void mapped_gather();
-
   ScalarFieldType* scalarNm1_{nullptr};
   ScalarFieldType* scalarN_{nullptr};
   ScalarFieldType* scalarNp1_{nullptr};

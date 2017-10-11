@@ -35,8 +35,8 @@
 // topology
 #include <stk_topology/topology.hpp>
 
-// Kokkos
-#include <Kokkos_Core.hpp>
+#include <KokkosInterface.h>
+#include <SimdInterface.h>
 
 namespace sierra{
 namespace nalu{
@@ -94,22 +94,20 @@ namespace
 //--------------------------------------------------------------------------
 template <class AlgTraits> void
 ScalarMassHOElemKernel<AlgTraits>::execute(
-  SharedMemView<double **>& lhs,
-  SharedMemView<double *>& rhs,
-  ScratchViews<double>& scratchViews)
+  SharedMemView<DoubleType**>& lhs,
+  SharedMemView<DoubleType*>& rhs,
+  ScratchViews<DoubleType>& scratchViews)
 {
   constexpr int n1D = AlgTraits::nodes1D_;
   constexpr int poly_order = AlgTraits::polyOrder_;
 
   SharedMemView<double**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
-
-  SharedMemView<double*> v_scalarNm1 = scratchViews.get_scratch_view_1D(*scalarNm1_);
-  SharedMemView<double*> v_scalarN   = scratchViews.get_scratch_view_1D(*scalarN_);
-  SharedMemView<double*> v_scalarNp1 = scratchViews.get_scratch_view_1D(*scalarNp1_);
-
-  SharedMemView<double*> v_densityNm1 = scratchViews.get_scratch_view_1D(*densityNm1_);
-  SharedMemView<double*> v_densityN   = scratchViews.get_scratch_view_1D(*densityN_);
-  SharedMemView<double*> v_densityNp1 = scratchViews.get_scratch_view_1D(*densityNp1_);
+  SharedMemView<double*> v_scalarNm1   = scratchViews.get_scratch_view_1D(*scalarNm1_);
+  SharedMemView<double*> v_scalarN     = scratchViews.get_scratch_view_1D(*scalarN_);
+  SharedMemView<double*> v_scalarNp1   = scratchViews.get_scratch_view_1D(*scalarNp1_);
+  SharedMemView<double*> v_densityNm1  = scratchViews.get_scratch_view_1D(*densityNm1_);
+  SharedMemView<double*> v_densityN    = scratchViews.get_scratch_view_1D(*densityN_);
+  SharedMemView<double*> v_densityNp1  = scratchViews.get_scratch_view_1D(*densityNp1_);
 
 
   // reorder fields into the ordering expected by the alg

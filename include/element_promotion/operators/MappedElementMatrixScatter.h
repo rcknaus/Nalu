@@ -17,36 +17,6 @@ namespace sierra {
 namespace nalu {
 namespace tensor_assembly {
 
-//  template <int p, typename FlatViewType>
-//  void mapped_gather(CVFEMOperatorsQuad<p> ops, FlatViewType vin,  nodal_scalar_view<AlgTraitsQuad<p>> vout)
-//  {
-//    static_assert(Kokkos::rank(vin) == 1u, "");
-//
-//    for (int j = 0; j < AlgTraitsQuad<p>::nodes1D_; ++j) {
-//      for (int i = 0; i < AlgTraitsQuad<p>::nodes1D_; ++i) {
-//        vout(j,i) = vin(ops.node_map_(j*AlgTraitsQuad<p>::nodes1D_+i));
-//      }
-//    }
-//  }
-//
-//  template <int p, typename TwoDFlatViewType>
-//  void mappe(
-//    node_map_view<AlgTraitsQuad<p>> node_map,
-//    TwoDFlatViewType vin,
-//    nodal_vector_view<AlgTraitsQuad<p>> vout)
-//  {
-//    static_assert(Kokkos::rank(vin) == 2, "");
-//
-//    for (int j = 0; j < AlgTraitsQuad<p>::nodes1D_; ++j) {
-//      for (int i = 0; i < AlgTraitsQuad<p>::nodes1D_; ++i) {
-//        auto nodeId = node_map(j*AlgTraitsQuad<p>::nodes1D_+i);
-//        for (int d = 0; d < AlgTraitsQuad<p>::nDim_; ++d) {
-//          vout(d,j,i) = vin(nodeId,d);
-//        }
-//      }
-//    }
-//  }
-
   template <int p, typename LHSViewType, typename RHSViewType>
   void mapped_scatter(
     node_map_view<AlgTraitsQuad<p>> node_map,
@@ -55,6 +25,8 @@ namespace tensor_assembly {
     LHSViewType lhs,
     RHSViewType rhs)
   {
+    // directly modify the suminto?
+
     constexpr int npe = AlgTraitsQuad<p>::nodesPerElement_;
     constexpr int n1D = AlgTraitsQuad<p>::nodes1D_;
 
