@@ -14,8 +14,7 @@
 
 #include <stk_mesh/base/Entity.hpp>
 
-// Kokkos
-#include <stk_simd_view/simd_view.hpp>
+#include <SimdInterface.h>
 #include <KokkosInterface.h>
 
 namespace sierra { namespace nalu {

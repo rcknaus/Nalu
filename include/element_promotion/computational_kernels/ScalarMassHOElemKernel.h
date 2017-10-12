@@ -59,7 +59,7 @@ private:
   double gamma2_{0.0};
   double gamma3_{0.0};
 
-  CVFEMOperators<AlgTraits::polyOrder_, AlgTraits::baseTopo_> ops_{};
+  CVFEMOperators<AlgTraits::polyOrder_, DoubleType, AlgTraits::baseTopo_> ops_{};
   node_map_view<AlgTraits> v_node_map_{ make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>() };
 
   nodal_scalar_view<AlgTraits> v_scalarNm1_{"scalarnm1"};

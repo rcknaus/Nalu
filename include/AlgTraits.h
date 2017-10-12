@@ -57,6 +57,7 @@ struct AlgTraitsWed6 {
   static constexpr int numScvIp_ = 6;
   static constexpr int numGp_ = 6; // for FEM (not supported)
   static constexpr stk::topology::topology_t topo_ = stk::topology::WEDGE_6;
+
 };
 
 

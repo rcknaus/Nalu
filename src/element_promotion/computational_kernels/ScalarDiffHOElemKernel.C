@@ -33,7 +33,8 @@
 #include <stk_topology/topology.hpp>
 
 // Kokkos
-#include <Kokkos_Core.hpp>
+#include <KokkosInterface.h>
+#include <SimdInterface.h>
 
 namespace sierra{
 namespace nalu{
@@ -53,7 +54,7 @@ ScalarDiffHOElemKernel<AlgTraits>::ScalarDiffHOElemKernel(
   coordinates_ = meta_data.get_field<VectorFieldType>(stk::topology::NODE_RANK, solnOpts.get_coordinates_name());
 
   // only necessary for correctly sizing scratch views
-  dataPreReqs.add_cvfem_surface_me(get_surface_master_element(AlgTraits::topo_));
+  dataPreReqs.add_cvfem_surface_me(MasterElementRepo::get_surface_master_element(AlgTraits::topo_));
 
   dataPreReqs.add_gathered_nodal_field(*coordinates_, AlgTraits::nDim_);
   dataPreReqs.add_gathered_nodal_field(*scalarQ, 1);
@@ -62,15 +63,15 @@ ScalarDiffHOElemKernel<AlgTraits>::ScalarDiffHOElemKernel(
 //--------------------------------------------------------------------------
 template <class AlgTraits> void
 ScalarDiffHOElemKernel<AlgTraits>::execute(
-  SharedMemView<double **>& lhs,
-  SharedMemView<double *>& rhs,
-  ScratchViews<double>& scratchViews)
+  SharedMemView<DoubleType**>& lhs,
+  SharedMemView<DoubleType*>& rhs,
+  ScratchViews<DoubleType>& scratchViews)
 {
   constexpr int poly_order = AlgTraits::polyOrder_;
 
-  SharedMemView<double**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
-  SharedMemView<double*> v_flatScalar = scratchViews.get_scratch_view_1D(*scalarQ_);
-  SharedMemView<double*> v_flatDiff  = scratchViews.get_scratch_view_1D(*diffFluxCoeff_);
+  SharedMemView<DoubleType**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
+  SharedMemView<DoubleType*> v_flatScalar = scratchViews.get_scratch_view_1D(*scalarQ_);
+  SharedMemView<DoubleType*> v_flatDiff  = scratchViews.get_scratch_view_1D(*diffFluxCoeff_);
 
   // reorder fields into the ordering expected by the alg
   for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
@@ -84,8 +85,8 @@ ScalarDiffHOElemKernel<AlgTraits>::execute(
     }
   }
 
-  Kokkos::deep_copy(v_lhs_, 0.0);
-  Kokkos::deep_copy(v_rhs_, 0.0);
+  Kokkos::deep_copy(v_lhs_, DoubleType(0.0));
+  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
 
   /**
    * The computation of the diffusion term, split into three steps.

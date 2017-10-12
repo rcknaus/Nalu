@@ -40,6 +40,24 @@ namespace nalu{
   }
 
   template <template <typename> class T, typename... Args>
+  Kernel* build_sgl_kernel(int dimension, stk::topology topo, Args&&... args)
+  {
+    int poly_order = poly_order_from_super_topology(dimension, topo);
+    switch (poly_order) {
+      case 2: return new T<AlgTraitsQuad<2>>(std::forward<Args>(args)...);
+      case 3: return new T<AlgTraitsQuad<3>>(std::forward<Args>(args)...);
+      case 4: return new T<AlgTraitsQuad<4>>(std::forward<Args>(args)...);
+      case USER_POLY_ORDER: return new T<AlgTraitsQuad<USER_POLY_ORDER>>(std::forward<Args>(args)...);
+      default:
+        ThrowRequireMsg(false,
+          "Polynomial order" + std::to_string(poly_order) + "is not supported by default.  "
+          "Specify USER_POLY_ORDER and recompile to run.");
+        return nullptr;
+    }
+  }
+
+
+  template <template <typename> class T, typename... Args>
   Kernel* build_topo_kernel(int dimension, stk::topology topo, Args&&... args)
   {
     if (!topo.is_super_topology()) {
@@ -95,6 +113,29 @@ namespace nalu{
     KernelBuilderLog::self().add_valid_name(eqSys.eqnTypeName_,  name);
     if (eqSys.supp_alg_is_requested(name)) {
       Kernel* compKernel = build_topo_kernel<T>(dim, topo, std::forward<Args>(args)...);
+      ThrowRequire(compKernel != nullptr);
+      KernelBuilderLog::self().add_built_name(eqSys.eqnTypeName_,  name);
+      kernelVec.push_back(compKernel);
+      isCreated = true;
+    }
+    return isCreated;
+  }
+
+  template <template <typename> class T, typename... Args>
+  bool build_sgl_kernel_if_requested(
+    stk::topology topo,
+    EquationSystem& eqSys,
+    std::vector<Kernel*>& kernelVec,
+    std::string name,
+    Args&&... args)
+  {
+    // dimension, in addition to topology, is necessary to distinguish the HO elements,
+    const int dim = eqSys.realm_.spatialDimension_;
+
+    bool isCreated = false;
+    KernelBuilderLog::self().add_valid_name(eqSys.eqnTypeName_,  name);
+    if (eqSys.supp_alg_is_requested(name)) {
+      Kernel* compKernel = build_sgl_kernel<T>(dim, topo, std::forward<Args>(args)...);
       ThrowRequire(compKernel != nullptr);
       KernelBuilderLog::self().add_built_name(eqSys.eqnTypeName_,  name);
       kernelVec.push_back(compKernel);

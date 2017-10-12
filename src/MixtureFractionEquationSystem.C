@@ -51,7 +51,7 @@
 // consolidated
 #include <AssembleElemSolverAlgorithm.h>
 #include <ScalarMassElemKernel.h>
-#include <DiffElemKernel.h>
+#include <ScalarAdvDiffElemKernel.h>
 #include <ScalarUpwAdvDiffElemKernel.h>
 
 // ho

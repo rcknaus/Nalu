@@ -32,14 +32,12 @@ namespace tensor_assembly {
 
     for (int j = 0; j < npe; ++j) {
       for (int i = 0; i < npe; ++i) {
-        ThrowAssert(std::isfinite(mapped_lhs(j,i)));
         lhs(node_map(j), node_map(i)) += mapped_lhs(j,i);
       }
     }
 
     for (int j = 0; j < n1D; ++j) {
       for (int i = 0; i < n1D; ++i) {
-        ThrowAssert(std::isfinite(mapped_rhs(j,i)));
         rhs(node_map(j*n1D +i)) += mapped_rhs(j,i);
       }
     }

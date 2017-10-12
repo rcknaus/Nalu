@@ -394,12 +394,12 @@ HeatCondEquationSystem::register_interior_algorithm(
         realm_.bulk_data(), *realm_.solutionOptions_, temperature_, thermalCond_, dataPreReqs
       );
 
-      build_topo_kernel_if_requested<ScalarDiffHOElemKernel>(
+      build_sgl_kernel_if_requested<ScalarDiffHOElemKernel>(
         partTopo, *this, activeKernels, "experimental_ho_quad_cvfem_diffusion",
         realm_.bulk_data(),  *realm_.solutionOptions_, temperature_, thermalCond_, dataPreReqs
       );
 
-      build_topo_kernel_if_requested<SteadyThermalContactSrcHOElemKernel>(
+      build_sgl_kernel_if_requested<SteadyThermalContactSrcHOElemKernel>(
         partTopo, *this, activeKernels, "experimental_ho_quad_mms_source",
         realm_.bulk_data(),  *realm_.solutionOptions_, dataPreReqs
       );

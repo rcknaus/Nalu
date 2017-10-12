@@ -33,13 +33,12 @@ public:
   SteadyThermalContactSrcHOElemKernel(
     const stk::mesh::BulkData& bulkData,
     SolutionOptions& solnOpts,
-    const ElementDescription& desc,
     ElemDataRequests& dataPreReqs);
 
   void execute(
-    SharedMemView<double **>& lhs,
-    SharedMemView<double *>& rhs,
-    ScratchViews& scratchViews) final;
+    SharedMemView<DoubleType**>&,
+    SharedMemView<DoubleType*>&,
+    ScratchViews<DoubleType>&) final;
 
 private:
   VectorFieldType *coordinates_;
@@ -50,7 +49,7 @@ private:
 
   // fixed scratch space
   CVFEMOperatorsQuad<AlgTraits::polyOrder_> ops_;
-  nodal_scalar_view<AlgTraits, int> v_node_map_{"tensor_product_node_map"};
+  node_map_view<AlgTraits> v_node_map_{make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>()};
   nodal_scalar_view<AlgTraits> v_nodalSource_{"v_nodal_source"};
   nodal_scalar_view<AlgTraits> v_vol_{"v_volume_metric"};
   nodal_scalar_view<AlgTraits> v_rhs_{"v_rhs"};

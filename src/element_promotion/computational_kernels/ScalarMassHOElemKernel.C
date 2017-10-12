@@ -66,7 +66,7 @@ ScalarMassHOElemKernel<AlgTraits>::ScalarMassHOElemKernel(
   coordinates_ = meta_data.get_field<VectorFieldType>( stk::topology::NODE_RANK, solnOpts.get_coordinates_name());
 
   // only necessary for correctly sizing scratch views
-  dataPreReqs.add_cvfem_surface_me(get_surface_master_element(AlgTraits::topo_));
+  dataPreReqs.add_cvfem_surface_me(MasterElementRepo::get_surface_master_element(AlgTraits::topo_));
 
   dataPreReqs.add_coordinates_field(*coordinates_, AlgTraits::nDim_, CURRENT_COORDINATES);
   dataPreReqs.add_gathered_nodal_field(*scalarNm1_, 1);
@@ -101,13 +101,13 @@ ScalarMassHOElemKernel<AlgTraits>::execute(
   constexpr int n1D = AlgTraits::nodes1D_;
   constexpr int poly_order = AlgTraits::polyOrder_;
 
-  SharedMemView<double**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
-  SharedMemView<double*> v_scalarNm1   = scratchViews.get_scratch_view_1D(*scalarNm1_);
-  SharedMemView<double*> v_scalarN     = scratchViews.get_scratch_view_1D(*scalarN_);
-  SharedMemView<double*> v_scalarNp1   = scratchViews.get_scratch_view_1D(*scalarNp1_);
-  SharedMemView<double*> v_densityNm1  = scratchViews.get_scratch_view_1D(*densityNm1_);
-  SharedMemView<double*> v_densityN    = scratchViews.get_scratch_view_1D(*densityN_);
-  SharedMemView<double*> v_densityNp1  = scratchViews.get_scratch_view_1D(*densityNp1_);
+  SharedMemView<DoubleType**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
+  SharedMemView<DoubleType*> v_scalarNm1   = scratchViews.get_scratch_view_1D(*scalarNm1_);
+  SharedMemView<DoubleType*> v_scalarN     = scratchViews.get_scratch_view_1D(*scalarN_);
+  SharedMemView<DoubleType*> v_scalarNp1   = scratchViews.get_scratch_view_1D(*scalarNp1_);
+  SharedMemView<DoubleType*> v_densityNm1  = scratchViews.get_scratch_view_1D(*densityNm1_);
+  SharedMemView<DoubleType*> v_densityN    = scratchViews.get_scratch_view_1D(*densityN_);
+  SharedMemView<DoubleType*> v_densityNp1  = scratchViews.get_scratch_view_1D(*densityNp1_);
 
 
   // reorder fields into the ordering expected by the alg
@@ -127,13 +127,13 @@ ScalarMassHOElemKernel<AlgTraits>::execute(
       }
     }
   }
-  Kokkos::deep_copy(v_lhs_, 0.0);
-  Kokkos::deep_copy(v_rhs_, 0.0);
+  Kokkos::deep_copy(v_lhs_, DoubleType(0.0));
+  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
 
   const auto& weight = ops_.mat_.nodalWeights;
 
   high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
-  double inv_dt = 1.0 / dt_;
+  DoubleType inv_dt = 1.0 / dt_;
 
   for (int n = 0; n < n1D; ++n) {
     for (int m = 0; m < n1D; ++m) {

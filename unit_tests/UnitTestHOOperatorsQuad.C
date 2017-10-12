@@ -61,9 +61,9 @@ template <int p> void scs_interp_quad()
   std::vector<double> coeffsY = { coeff(rng), coeff(rng) };
 
   using AlgTraits = sierra::nalu::AlgTraitsQuad<p>;
-  auto ops = sierra::nalu::CVFEMOperatorsQuad<p>();
+  auto ops = sierra::nalu::CVFEMOperatorsQuad<p, double>();
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> nodalValues("nodalValues");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> nodalValues("nodalValues");
   for (int j = 0; j < p +1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p + 1; ++i) {
@@ -74,7 +74,7 @@ template <int p> void scs_interp_quad()
 
   const auto scsLocs = sierra::nalu::gauss_legendre_rule(p).first;
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> exact_xhat_interp("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> exact_xhat_interp("");
   for (int j = 0; j < p + 1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p; ++i) {
@@ -83,11 +83,11 @@ template <int p> void scs_interp_quad()
     }
   }
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> operator_xhat_interp("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> operator_xhat_interp("");
   ops.scs_xhat_interp(nodalValues, operator_xhat_interp);
   EXPECT_VIEW_NEAR_2D(exact_xhat_interp, operator_xhat_interp, my_tol);
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> exact_yhat_interp("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> exact_yhat_interp("");
   for (int j = 0; j < p; ++j) {
     double locy = scsLocs[j];
     for (int i = 0; i < p+1; ++i) {
@@ -96,7 +96,7 @@ template <int p> void scs_interp_quad()
     }
   }
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> operator_yhat_interp("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> operator_yhat_interp("");
   ops.scs_yhat_interp(nodalValues, operator_yhat_interp);
   EXPECT_VIEW_NEAR_2D(exact_yhat_interp, operator_yhat_interp, my_tol);
 }
@@ -111,9 +111,9 @@ template <int p> void scs_grad_quad()
   std::vector<double> coeffsY = { coeff(rng), coeff(rng) };
 
   using AlgTraits = sierra::nalu::AlgTraitsQuad<p>;
-  auto ops = sierra::nalu::CVFEMOperatorsQuad<p>();
+  auto ops = sierra::nalu::CVFEMOperatorsQuad<p, double>();
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> nodalValues("nodalValues");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> nodalValues("nodalValues");
   for (int j = 0; j < p +1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p + 1; ++i) {
@@ -124,7 +124,7 @@ template <int p> void scs_grad_quad()
 
   const auto scsLocs = sierra::nalu::gauss_legendre_rule(p).first;
 
-  sierra::nalu::nodal_vector_view<AlgTraits> exact_xhat_grad("");
+  sierra::nalu::nodal_vector_view<AlgTraits,double> exact_xhat_grad("");
   for (int j = 0; j < p + 1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p; ++i) {
@@ -134,11 +134,11 @@ template <int p> void scs_grad_quad()
     }
   }
 
-  sierra::nalu::nodal_vector_view<AlgTraits> op_xhat_grad("");
+  sierra::nalu::nodal_vector_view<AlgTraits,double> op_xhat_grad("");
   ops.scs_xhat_grad(nodalValues, op_xhat_grad);
   EXPECT_VIEW_NEAR_3D(exact_xhat_grad, op_xhat_grad, my_tol);
 
-  sierra::nalu::nodal_vector_view<AlgTraits> exact_yhat_grad("");
+  sierra::nalu::nodal_vector_view<AlgTraits,double> exact_yhat_grad("");
   for (int j = 0; j < p; ++j) {
     double locy = scsLocs[j];
     for (int i = 0; i < p+1; ++i) {
@@ -148,7 +148,7 @@ template <int p> void scs_grad_quad()
     }
   }
 
-  sierra::nalu::nodal_vector_view<AlgTraits> op_yhat_grad("");
+  sierra::nalu::nodal_vector_view<AlgTraits,double> op_yhat_grad("");
   ops.scs_yhat_grad(nodalValues, op_yhat_grad);
   EXPECT_VIEW_NEAR_3D(exact_yhat_grad, op_yhat_grad, my_tol);
 }
@@ -163,9 +163,9 @@ template <int p> void nodal_grad_quad()
   std::vector<double> coeffsY = { coeff(rng), coeff(rng) };
 
   using AlgTraits = sierra::nalu::AlgTraitsQuad<p>;
-  auto ops = sierra::nalu::CVFEMOperatorsQuad<p>();
+  auto ops = sierra::nalu::CVFEMOperatorsQuad<p,double>();
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> nodalValues("nodalValues");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> nodalValues("nodalValues");
   for (int j = 0; j < p +1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p + 1; ++i) {
@@ -176,7 +176,7 @@ template <int p> void nodal_grad_quad()
 
   const auto scsLocs = sierra::nalu::gauss_legendre_rule(p).first;
 
-  sierra::nalu::nodal_vector_view<AlgTraits> exact_nodal_grad("");
+  sierra::nalu::nodal_vector_view<AlgTraits,double> exact_nodal_grad("");
   for (int j = 0; j < p + 1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p+1; ++i) {
@@ -186,7 +186,7 @@ template <int p> void nodal_grad_quad()
     }
   }
 
-  sierra::nalu::nodal_vector_view<AlgTraits> op_nodal_grad{""};
+  sierra::nalu::nodal_vector_view<AlgTraits,double> op_nodal_grad{""};
 
   Kokkos::View<double[2][p+1][p+1]> v{""};
   ops.nodal_grad(nodalValues, op_nodal_grad);
@@ -203,9 +203,9 @@ template <int p> void scs_integration_quad()
   std::vector<double> coeffsY = { coeff(rng), coeff(rng) };
 
   using AlgTraits = sierra::nalu::AlgTraitsQuad<p>;
-  auto ops = sierra::nalu::CVFEMOperatorsQuad<p>();
+  auto ops = sierra::nalu::CVFEMOperatorsQuad<p,double>();
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> nodalValues("nodalValues");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> nodalValues("nodalValues");
   for (int j = 0; j < p +1; ++j) {
     double locy = elem->nodeLocs1D[j];
     for (int i = 0; i < p + 1; ++i) {
@@ -216,9 +216,9 @@ template <int p> void scs_integration_quad()
 
   const auto scsEndLoc = sierra::nalu::pad_end_points(sierra::nalu::gauss_legendre_rule(p).first);
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> exact_xhat_integral("");
-  sierra::nalu::nodal_scalar_view<AlgTraits> exact_yhat_integral("");
-  sierra::nalu::nodal_scalar_view<AlgTraits> exact_vol_integral("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> exact_xhat_integral("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> exact_yhat_integral("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> exact_vol_integral("");
 
   for (unsigned j = 0; j < p + 1; ++j) {
     double yl = scsEndLoc[j + 0];
@@ -234,15 +234,15 @@ template <int p> void scs_integration_quad()
     }
   }
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> op_xhat_integral("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> op_xhat_integral("");
   ops.volume_xhat(nodalValues, op_xhat_integral);
   EXPECT_VIEW_NEAR_2D(exact_xhat_integral, op_xhat_integral, my_tol);
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> op_yhat_integral("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> op_yhat_integral("");
   ops.volume_yhat(nodalValues, op_yhat_integral);
   EXPECT_VIEW_NEAR_2D(exact_yhat_integral, op_yhat_integral, my_tol);
 
-  sierra::nalu::nodal_scalar_view<AlgTraits> op_vol_integral("");
+  sierra::nalu::nodal_scalar_view<AlgTraits,double> op_vol_integral("");
   ops.volume_2D(nodalValues, op_vol_integral);
   EXPECT_VIEW_NEAR_2D(exact_vol_integral, op_vol_integral, my_tol);
 }

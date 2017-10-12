@@ -26,7 +26,6 @@ namespace nalu{
 
 class ElemDataRequests;
 class Realm;
-class ScratchViews;
 class MasterElement;
 
 template<class AlgTraits>
@@ -41,16 +40,16 @@ public:
     ElemDataRequests& dataPreReqs);
 
   void execute(
-    SharedMemView<double**>& lhs,
-    SharedMemView<double*>& rhs,
-    ScratchViews<double>& scratchViews) final;
+    SharedMemView<DoubleType**>&,
+    SharedMemView<DoubleType*>&,
+    ScratchViews<DoubleType>&) final;
 
 private:
   ScalarFieldType *scalarQ_;
   ScalarFieldType *diffFluxCoeff_;
   VectorFieldType *coordinates_;
 
-  CVFEMOperators<AlgTraits::polyOrder_, AlgTraits::baseTopo_> ops_{};
+  CVFEMOperators<AlgTraits::polyOrder_, DoubleType, AlgTraits::baseTopo_> ops_{};
   node_map_view<AlgTraits> v_node_map_{make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>()};
   nodal_scalar_view<AlgTraits> v_diff_{"scalar_ho_diffusion_coeff"};
   nodal_scalar_view<AlgTraits> v_scalar_{"scalar_ho_q"};

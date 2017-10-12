@@ -33,7 +33,6 @@ template <class AlgTraits>
 SteadyThermalContactSrcHOElemKernel<AlgTraits>::SteadyThermalContactSrcHOElemKernel(
   const stk::mesh::BulkData& bulkData,
   SolutionOptions& solnOpts,
-  const ElementDescription& desc,
   ElemDataRequests& dataPreReqs)
   : Kernel(),
     a_(1.0),
@@ -45,41 +44,35 @@ SteadyThermalContactSrcHOElemKernel<AlgTraits>::SteadyThermalContactSrcHOElemKer
   const stk::mesh::MetaData& meta_data = bulkData.mesh_meta_data();
   coordinates_ = meta_data.get_field<VectorFieldType>(stk::topology::NODE_RANK, solnOpts.get_coordinates_name());
 
-  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-      v_node_map_(j,i) = desc.node_map(i,j);
-    }
-  }
-
-  dataPreReqs.add_cvfem_volume_me(get_volume_master_element(AlgTraits::topo_));
+  dataPreReqs.add_cvfem_volume_me(MasterElementRepo::get_volume_master_element(AlgTraits::topo_));
   dataPreReqs.add_gathered_nodal_field(*coordinates_, AlgTraits::nDim_);
 }
 //--------------------------------------------------------------------------
 template<class AlgTraits>
 void
 SteadyThermalContactSrcHOElemKernel<AlgTraits>::execute(
-  SharedMemView<double**>& /*lhs*/,
-  SharedMemView<double*>& rhs,
-  ScratchViews& scratchViews)
+  SharedMemView<DoubleType**>& /*lhs*/,
+  SharedMemView<DoubleType*>& rhs,
+  ScratchViews<DoubleType>& scratchViews)
 {
-  SharedMemView<double**>& v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
+  SharedMemView<DoubleType**>& v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
 
   for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
     for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
       int nodeId = v_node_map_(j,i);
-      double x = v_flatCoords(nodeId, 0);
-      double y = v_flatCoords(nodeId, 1);
+      DoubleType x = v_flatCoords(nodeId, 0);
+      DoubleType y = v_flatCoords(nodeId, 1);
 
       v_coords_(0,j,i) = x;
       v_coords_(1,j,i) = y;
-      v_nodalSource_(j,i) = k_/4.0*(2.0*a_*pi_)*(2.0*a_*pi_)*(cos(2.0*a_*pi_*x) + cos(2.0*a_*pi_*y));
+      v_nodalSource_(j,i) = k_/4.0*(2.0*a_*pi_)*(2.0*a_*pi_)*(stk::math::cos(2.0*a_*pi_*x) + stk::math::cos(2.0*a_*pi_*y));
     }
   }
 
-  Kokkos::deep_copy(v_vol_, 0.0);
+  Kokkos::deep_copy(v_vol_, DoubleType(0.0));
   high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
 
-  Kokkos::deep_copy(v_rhs_, 0.0);
+  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
   tensor_assembly::add_volumetric_source(ops_, v_vol_, v_nodalSource_, v_rhs_);
 
   for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
@@ -89,7 +82,7 @@ SteadyThermalContactSrcHOElemKernel<AlgTraits>::execute(
   }
 }
 
-INSTANTIATE_HOQUAD_ALGORITHM(SteadyThermalContactSrcHOElemKernel);
+INSTANTIATE_KERNEL_2D_HOSGL(SteadyThermalContactSrcHOElemKernel);
 
 } // namespace nalu
 } // namespace Sierra

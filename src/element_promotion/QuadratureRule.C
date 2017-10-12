@@ -269,9 +269,7 @@ subinterval_weights_for_fixed_abscissae(
 
 //--------------------------------------------------------------------
 std::pair<std::vector<double>, std::vector<double>>
-SGL_quadrature_rule(
-  int order,
-  std::vector<double> scsEndLocations)
+SGL_quadrature_rule(int order, const double* scsEndLocations)
 {
   /*
    * Produces the weights for a fixed
@@ -285,8 +283,7 @@ SGL_quadrature_rule(
    */
   int N = order;
 
-  std::vector<double> fixedAbscissae;
-  std::tie(fixedAbscissae, std::ignore) = gauss_lobatto_legendre_rule(N);
+  std::vector<double> fixedAbscissae = gauss_lobatto_legendre_rule(N).first;
 
   std::vector<double> weightTensor(N*N);
   Teuchos::SerialDenseVector<int, double> scvWeights(N);
@@ -305,10 +302,7 @@ SGL_quadrature_rule(
   return std::make_pair(fixedAbscissae, weightTensor);
 }
 //--------------------------------------------------------------------
-std::vector<double> pad_end_points(
-  std::vector<double> x,
-  double xleft,
-  double xright)
+std::vector<double> pad_end_points(const std::vector<double>& x, double xleft, double xright)
 {
   std::vector<double> padded_x(x.size()+2);
   padded_x[0] = xleft;
@@ -316,6 +310,18 @@ std::vector<double> pad_end_points(
     padded_x[j+1] = x[j];
   }
   padded_x[x.size()+1] = xright;
+
+  return padded_x;
+}
+
+std::vector<double> pad_end_points(int n, const double* x, double xleft, double xright)
+{
+  std::vector<double> padded_x(n+2);
+  padded_x[0] = xleft;
+  for (unsigned j = 0; j < n;++j) {
+    padded_x[j+1] = x[j];
+  }
+  padded_x[n+1] = xright;
 
   return padded_x;
 }
