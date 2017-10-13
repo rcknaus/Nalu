@@ -22,7 +22,10 @@ namespace sierra { namespace nalu {
   using default_float_type = DoubleType;
 
   template <typename ArrayType>
-  using ViewType = Kokkos::View<ArrayType>;
+  using ViewType = SharedMemView<ArrayType>;
+
+  template <typename ArrayType>
+  using CoeffViewType = Kokkos::View<ArrayType>;
 
  //--------------------------------------------------------------------------
   template <typename AlgTraits, typename Scalar = default_float_type>
@@ -71,31 +74,31 @@ namespace sierra { namespace nalu {
   using nodal_matrix_array = Scalar[poly_order+1][poly_order+1];
 
   template <int poly_order, typename Scalar = default_float_type>
-  using nodal_matrix_view = ViewType<nodal_matrix_array<poly_order, Scalar>>;
+  using nodal_matrix_view = CoeffViewType<nodal_matrix_array<poly_order, Scalar>>;
   //--------------------------------------------------------------------------
   template <int poly_order, typename Scalar = default_float_type>
   using scs_matrix_array = Scalar[poly_order+1][poly_order+1]; // always pad to be square
 
   template <int poly_order, typename Scalar = default_float_type>
-  using scs_matrix_view = ViewType<scs_matrix_array<poly_order,Scalar>>;
+  using scs_matrix_view = CoeffViewType<scs_matrix_array<poly_order,Scalar>>;
   //--------------------------------------------------------------------------
   template <int poly_order, typename Scalar = default_float_type>
   using linear_nodal_matrix_array = Scalar[2][poly_order+1];
 
   template <int poly_order, typename Scalar = default_float_type>
-  using linear_nodal_matrix_view = ViewType<linear_nodal_matrix_array<poly_order,Scalar>>;
+  using linear_nodal_matrix_view = CoeffViewType<linear_nodal_matrix_array<poly_order,Scalar>>;
   //--------------------------------------------------------------------------
   template <int poly_order, typename Scalar = default_float_type>
   using linear_scs_matrix_array = Scalar[2][poly_order];
 
   template <int poly_order, typename Scalar = default_float_type>
-  using linear_scs_matrix_view = ViewType<linear_scs_matrix_array<poly_order, Scalar>>;
+  using linear_scs_matrix_view = CoeffViewType<linear_scs_matrix_array<poly_order, Scalar>>;
   //--------------------------------------------------------------------------
   template <typename AlgTraits, typename IntegralScalar = int>
   using node_map_array = IntegralScalar[AlgTraits::nodesPerElement_];
 
   template <typename AlgTraits, typename IntegralScalar = int>
-  using node_map_view = ViewType<node_map_array<AlgTraits,IntegralScalar>>;
+  using node_map_view = CoeffViewType<node_map_array<AlgTraits,IntegralScalar>>;
 
 } // namespace nalu
 } // namespace Sierra

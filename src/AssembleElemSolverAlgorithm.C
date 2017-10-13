@@ -71,10 +71,10 @@ AssembleElemSolverAlgorithm::initialize_connectivity()
 
 // FIXME: move this
 
-FieldGatherer<2, AlgTraitsQuad> gatherer_quad_2;
-FieldGatherer<3, AlgTraitsQuad> gatherer_quad_3;
-FieldGatherer<4, AlgTraitsQuad> gatherer_quad_4;
-FieldGatherer<USER_POLY_ORDER, AlgTraitsQuad> gatherer_quad_user;
+static FieldGatherer<2, AlgTraitsQuad> gatherer_quad_2;
+static FieldGatherer<3, AlgTraitsQuad> gatherer_quad_3;
+static FieldGatherer<4, AlgTraitsQuad> gatherer_quad_4;
+static FieldGatherer<USER_POLY_ORDER, AlgTraitsQuad> gatherer_quad_user;
 
 //--------------------------------------------------------------------------
 //-------- execute ---------------------------------------------------------

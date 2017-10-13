@@ -56,27 +56,27 @@ SteadyThermalContactSrcHOElemKernel<AlgTraits>::execute(
   SharedMemView<DoubleType*>& rhs,
   ScratchViews<DoubleType>& scratchViews)
 {
-  SharedMemView<DoubleType**>& v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
-
-  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-      int nodeId = v_node_map_(j*AlgTraits::nodes1D_+i);
-      v_coords_(XH,j,i) = v_flatCoords(nodeId, XH);
-      v_coords_(YH,j,i) = v_flatCoords(nodeId, YH);
-      v_nodalSource_(j,i) = k_/4.0*(2.0*a_*pi_)*(2.0*a_*pi_)*
-          (stk::math::cos(2.0*a_*pi_*v_coords_(XH,j,i)) + stk::math::cos(2.0*a_*pi_*v_coords_(YH,j,i)));
-    }
-  }
-
-  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
-  high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
-  tensor_assembly::add_volumetric_source(ops_, v_vol_, v_nodalSource_, v_rhs_);
-
-  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-      rhs(v_node_map_(j* AlgTraits::nodes1D_ +i)) += v_rhs_(j,i);
-    }
-  }
+//  SharedMemView<DoubleType**>& v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
+//
+//  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
+//    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
+//      int nodeId = v_node_map_(j*AlgTraits::nodes1D_+i);
+//      v_coords_(XH,j,i) = v_flatCoords(nodeId, XH);
+//      v_coords_(YH,j,i) = v_flatCoords(nodeId, YH);
+//      v_nodalSource_(j,i) = k_/4.0*(2.0*a_*pi_)*(2.0*a_*pi_)*
+//          (stk::math::cos(2.0*a_*pi_*v_coords_(XH,j,i)) + stk::math::cos(2.0*a_*pi_*v_coords_(YH,j,i)));
+//    }
+//  }
+//
+//  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
+//  high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
+//  tensor_assembly::add_volumetric_source(ops_, v_vol_, v_nodalSource_, v_rhs_);
+//
+//  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
+//    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
+//      rhs(v_node_map_(j* AlgTraits::nodes1D_ +i)) += v_rhs_(j,i);
+//    }
+//  }
 }
 
 INSTANTIATE_KERNEL_2D_HOSGL(SteadyThermalContactSrcHOElemKernel);

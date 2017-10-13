@@ -67,28 +67,26 @@ ScalarDiffHOElemKernel<AlgTraits>::execute(
   SharedMemView<DoubleType*>& rhs,
   ScratchViews<DoubleType>& scratchViews)
 {
-  constexpr int poly_order = AlgTraits::polyOrder_;
-
-  nodal_scalar_view<AlgTraits> v_scalar(scratchViews.get_scratch_view_2D(*scalarQ_));
-  nodal_scalar_view<AlgTraits> v_diff(scratchViews.get_scratch_view_2D(*diffFluxCoeff_));
-  nodal_vector_view<AlgTraits> v_coords(scratchViews.get_scratch_view_3D(*coordinates_));
+  nodal_vector_view<AlgTraits, DoubleType> v_coords(scratchViews.get_scratch_view_3D(*coordinates_));
+  nodal_scalar_view<AlgTraits, DoubleType> v_scalar(scratchViews.get_scratch_view_2D(*scalarQ_));
+  nodal_scalar_view<AlgTraits, DoubleType> v_diff(scratchViews.get_scratch_view_2D(*diffFluxCoeff_));
 
   DoubleType scratch_lhs[AlgTraits::nodesPerElement_*AlgTraits::nodesPerElement_];
-  Kokkos::View<matrix_array<AlgTraits, DoubleType>> v_lhs(scratch_lhs);
+  matrix_view<AlgTraits, DoubleType> v_lhs(scratch_lhs);
 
   DoubleType scratch_rhs[AlgTraits::nodesPerElement_];
-  Kokkos::View<nodal_scalar_array<AlgTraits, DoubleType>> v_rhs(scratch_rhs);
-
-  DoubleType scratch_metric[AlgTraits::nDim_*AlgTraits::nDim_*AlgTraits::nscs_*AlgTraits::nodes1D_];
-  Kokkos::View<scs_tensor_array<AlgTraits, DoubleType>> v_metric(scratch_metric);
+  nodal_scalar_view<AlgTraits, DoubleType> v_rhs(scratch_rhs);
 
   Kokkos::deep_copy(v_lhs, DoubleType(0.0));
   Kokkos::deep_copy(v_rhs, DoubleType(0.0));
 
+  DoubleType scratch_metric[AlgTraits::nDim_*AlgTraits::nDim_*AlgTraits::nscs_*AlgTraits::nodes1D_];
+  scs_tensor_view<AlgTraits, DoubleType> v_metric(scratch_metric);
+//
   high_order_metrics::compute_diffusion_metric_linear(ops_, v_coords, v_diff, v_metric);
   tensor_assembly::elemental_diffusion_jacobian(ops_, v_metric, v_lhs);
   tensor_assembly::elemental_diffusion_action(ops_, v_metric, v_scalar, v_rhs);
-  tensor_assembly::mapped_scatter<poly_order>(v_node_map_, v_lhs, v_rhs, lhs, rhs);
+  tensor_assembly::mapped_scatter<AlgTraits::polyOrder_>(v_node_map_, v_lhs, v_rhs, lhs, rhs);
 }
 
 INSTANTIATE_KERNEL_2D_HOSGL(ScalarDiffHOElemKernel)

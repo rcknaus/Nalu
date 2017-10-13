@@ -52,10 +52,10 @@ private:
   // fixed scratch space
   CVFEMOperatorsQuad<AlgTraits::polyOrder_> ops_;
   node_map_view<AlgTraits> v_node_map_{""};
-  nodal_scalar_view<AlgTraits> v_nodalSource_{"v_nodal_source"};
-  nodal_scalar_view<AlgTraits> v_vol_{"v_volume_metric"};
-  nodal_scalar_view<AlgTraits> v_rhs_{"v_rhs"};
-  nodal_vector_view<AlgTraits> v_coords_{"v_coords"};
+//  nodal_scalar_view<AlgTraits> v_nodalSource_{"v_nodal_source"};
+//  nodal_scalar_view<AlgTraits> v_vol_{"v_volume_metric"};
+//  nodal_scalar_view<AlgTraits> v_rhs_{"v_rhs"};
+//  nodal_vector_view<AlgTraits> v_coords_{"v_coords"};
 };
 
 } // namespace nalu

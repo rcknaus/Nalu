@@ -96,57 +96,57 @@ ScalarMassHOElemKernel<AlgTraits>::execute(
   SharedMemView<DoubleType*>& rhs,
   ScratchViews<DoubleType>& scratchViews)
 {
-  constexpr int n1D = AlgTraits::nodes1D_;
-  constexpr int poly_order = AlgTraits::polyOrder_;
-
-  SharedMemView<DoubleType**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
-  SharedMemView<DoubleType*> v_scalarNm1   = scratchViews.get_scratch_view_1D(*scalarNm1_);
-  SharedMemView<DoubleType*> v_scalarN     = scratchViews.get_scratch_view_1D(*scalarN_);
-  SharedMemView<DoubleType*> v_scalarNp1   = scratchViews.get_scratch_view_1D(*scalarNp1_);
-//  SharedMemView<DoubleType*> v_densityNm1  = scratchViews.get_scratch_view_1D(*densityNm1_);
-//  SharedMemView<DoubleType*> v_densityN    = scratchViews.get_scratch_view_1D(*densityN_);
-//  SharedMemView<DoubleType*> v_densityNp1  = scratchViews.get_scratch_view_1D(*densityNp1_);
-
-
-  // reorder fields into the ordering expected by the alg
-  for (int j = 0; j < n1D; ++j) {
-    for (int i = 0; i < n1D; ++i) {
-      int nodeId = v_node_map_(j*n1D+i);
-      v_rhoNm1_(j,i) = 1.0;//v_densityNm1(nodeId);
-      v_rhoNp0_(j,i) = 1.0;//v_densityN(nodeId);
-      v_rhoNp1_(j,i) = 1.0;//v_densityNp1(nodeId);
-
-      v_scalarNm1_(j,i) = v_scalarNm1(nodeId);
-      v_scalarNp0_(j,i) = v_scalarN(nodeId);
-      v_scalarNp1_(j,i) = v_scalarNp1(nodeId);
-
-      for (int d = 0; d < AlgTraits::nDim_; ++d) {
-        v_coords_(d,j,i) = v_flatCoords(nodeId, d);
-      }
-    }
-  }
-  Kokkos::deep_copy(v_lhs_, DoubleType(0.0));
-  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
-
-  const auto& weight = ops_.mat_.nodalWeights;
-  high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
-  tensor_assembly::elemental_time_derivative_jacobian(ops_, v_vol_, gamma_[0], v_rhoNp1_, v_lhs_);
-  tensor_assembly::elemental_time_derivative_action(
-    ops_,
-    v_vol_,
-    gamma_[0],
-    gamma_[1],
-    gamma_[2],
-    v_rhoNm1_,
-    v_rhoNp0_,
-    v_rhoNp1_,
-    v_scalarNm1_,
-    v_scalarNp0_,
-    v_scalarNp1_,
-    v_time_derivative_,
-    v_rhs_
-  );
-  tensor_assembly::mapped_scatter<poly_order>(v_node_map_, v_lhs_, v_rhs_, lhs, rhs);
+//  constexpr int n1D = AlgTraits::nodes1D_;
+//  constexpr int poly_order = AlgTraits::polyOrder_;
+//
+//  SharedMemView<DoubleType**> v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
+//  SharedMemView<DoubleType*> v_scalarNm1   = scratchViews.get_scratch_view_1D(*scalarNm1_);
+//  SharedMemView<DoubleType*> v_scalarN     = scratchViews.get_scratch_view_1D(*scalarN_);
+//  SharedMemView<DoubleType*> v_scalarNp1   = scratchViews.get_scratch_view_1D(*scalarNp1_);
+////  SharedMemView<DoubleType*> v_densityNm1  = scratchViews.get_scratch_view_1D(*densityNm1_);
+////  SharedMemView<DoubleType*> v_densityN    = scratchViews.get_scratch_view_1D(*densityN_);
+////  SharedMemView<DoubleType*> v_densityNp1  = scratchViews.get_scratch_view_1D(*densityNp1_);
+//
+//
+//  // reorder fields into the ordering expected by the alg
+//  for (int j = 0; j < n1D; ++j) {
+//    for (int i = 0; i < n1D; ++i) {
+//      int nodeId = v_node_map_(j*n1D+i);
+//      v_rhoNm1_(j,i) = 1.0;//v_densityNm1(nodeId);
+//      v_rhoNp0_(j,i) = 1.0;//v_densityN(nodeId);
+//      v_rhoNp1_(j,i) = 1.0;//v_densityNp1(nodeId);
+//
+//      v_scalarNm1_(j,i) = v_scalarNm1(nodeId);
+//      v_scalarNp0_(j,i) = v_scalarN(nodeId);
+//      v_scalarNp1_(j,i) = v_scalarNp1(nodeId);
+//
+//      for (int d = 0; d < AlgTraits::nDim_; ++d) {
+//        v_coords_(d,j,i) = v_flatCoords(nodeId, d);
+//      }
+//    }
+//  }
+//  Kokkos::deep_copy(v_lhs_, DoubleType(0.0));
+//  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
+//
+//  const auto& weight = ops_.mat_.nodalWeights;
+//  high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
+//  tensor_assembly::elemental_time_derivative_jacobian(ops_, v_vol_, gamma_[0], v_rhoNp1_, v_lhs_);
+//  tensor_assembly::elemental_time_derivative_action(
+//    ops_,
+//    v_vol_,
+//    gamma_[0],
+//    gamma_[1],
+//    gamma_[2],
+//    v_rhoNm1_,
+//    v_rhoNp0_,
+//    v_rhoNp1_,
+//    v_scalarNm1_,
+//    v_scalarNp0_,
+//    v_scalarNp1_,
+//    v_time_derivative_,
+//    v_rhs_
+//  );
+//  tensor_assembly::mapped_scatter<poly_order>(v_node_map_, v_lhs_, v_rhs_, lhs, rhs);
 }
 
 INSTANTIATE_KERNEL_2D_HOSGL(ScalarMassHOElemKernel)

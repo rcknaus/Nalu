@@ -483,7 +483,7 @@ void fill_pre_req_data(ElemDataRequests& dataNeeded,
                        bool fillMEViews = true);
 
 
-template <int p, template <int p> class AlgTraits> struct FieldGatherer {};
+template <int p, template <int> class AlgTraits> struct FieldGatherer {};
 template <int p> struct FieldGatherer<p, AlgTraitsQuad>
 {
 public:

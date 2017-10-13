@@ -74,7 +74,7 @@ namespace high_order_metrics
 
   template <int p, typename Scalar>
   void compute_diffusion_metric_linear(
-    const CVFEMOperatorsQuad<p, Scalar>& ops,
+    const CVFEMOperators<p, Scalar, stk::topology::QUAD_4_2D>& ops,
     const nodal_vector_view<AlgTraitsQuad<p>, Scalar>& coord,
     const nodal_scalar_view<AlgTraitsQuad<p>, Scalar>& diffusivity,
     scs_tensor_view<AlgTraitsQuad<p>, Scalar>& metric)
@@ -95,7 +95,8 @@ namespace high_order_metrics
     const auto scs_interp = ops.mat_.linear_scs_interp;
     const auto nodal_interp = ops.mat_.linear_nodal_interp;
 
-    nodal_scalar_view<AlgTraitsQuad<p>, Scalar> diffIp{""};
+    Scalar scratch_diffIp[AlgTraitsQuad<p>::nodesPerElement_];
+    nodal_scalar_view<AlgTraitsQuad<p>, Scalar> diffIp(scratch_diffIp);
     ops.scs_xhat_interp(diffusivity, diffIp);
 
     for (int j = 0; j < p; ++j) {

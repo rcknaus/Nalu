@@ -154,10 +154,10 @@ void elemental_diffusion_action(
   constexpr int nscs = AlgTraitsQuad<poly_order>::nscs_;
 
   Scalar integrand[AlgTraits::nodes1D_*AlgTraits::nodes1D_];
-  Kokkos::View<nodal_scalar_array<AlgTraits,Scalar>> v_integrand(integrand);
+  nodal_scalar_view<AlgTraits,Scalar> v_integrand(integrand);
 
   Scalar grad_phi[AlgTraits::nDim_ * AlgTraits::nodes1D_*AlgTraits::nodes1D_];
-  Kokkos::View<nodal_vector_array<AlgTraits,Scalar>> v_grad_phi(grad_phi);
+  nodal_vector_view<AlgTraits,Scalar> v_grad_phi(grad_phi);
 
   ops.scs_xhat_grad(scalar, v_grad_phi);
   for (int k = 0; k < nscs; ++k) {
