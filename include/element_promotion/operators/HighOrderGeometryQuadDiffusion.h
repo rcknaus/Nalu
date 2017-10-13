@@ -21,9 +21,9 @@ namespace high_order_metrics
 {
   template <int p, typename Scalar>
   void compute_laplacian_metric_linear(
-    const CoefficientMatrices<p, Scalar> mat,
-    const nodal_vector_view<AlgTraitsQuad<p>, Scalar> coord,
-    scs_tensor_view<AlgTraitsQuad<p>, Scalar> metric)
+    const CoefficientMatrices<p, Scalar>& mat,
+    const nodal_vector_view<AlgTraitsQuad<p>, Scalar>& coord,
+    scs_tensor_view<AlgTraitsQuad<p>, Scalar>& metric)
   {
     enum { E_0 = 0, E_1 = 1, E_2 = 2, E_3 = 3 };
 
@@ -74,10 +74,10 @@ namespace high_order_metrics
 
   template <int p, typename Scalar>
   void compute_diffusion_metric_linear(
-    const CVFEMOperatorsQuad<p, Scalar> ops,
-    const nodal_vector_view<AlgTraitsQuad<p>, Scalar> coord,
-    const nodal_scalar_view<AlgTraitsQuad<p>, Scalar> diffusivity,
-    scs_tensor_view<AlgTraitsQuad<p>, Scalar> metric)
+    const CVFEMOperatorsQuad<p, Scalar>& ops,
+    const nodal_vector_view<AlgTraitsQuad<p>, Scalar>& coord,
+    const nodal_scalar_view<AlgTraitsQuad<p>, Scalar>& diffusivity,
+    scs_tensor_view<AlgTraitsQuad<p>, Scalar>& metric)
   {
     enum { E_0 = 0, E_1 = 1, E_2 = 2, E_3 = 3 };
 

@@ -45,6 +45,7 @@ public:
   ElemDataRequests dataNeededByKernels_;
   int rhsSize_;
   const bool interleaveMEViews_;
+
 };
 
 } // namespace nalu

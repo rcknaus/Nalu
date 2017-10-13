@@ -12,7 +12,7 @@
 #include <AlgTraits.h>
 
 #ifndef USER_POLY_ORDER
-#define USER_POLY_ORDER 5
+#define USER_POLY_ORDER 1
 #endif
 
 
@@ -43,7 +43,7 @@ template class ClassName<AlgTraitsQuadGL<3>>;                    \
 template class ClassName<AlgTraitsQuadGL<4>>;                    \
 template class ClassName<AlgTraitsQuadGL<USER_POLY_ORDER>>;      \
 
-#define INSTANTIATE_KERNEL_2D_HOSGL(ClassName)                      \
+#define INSTANTIATE_KERNEL_2D_HOSGL(ClassName)                 \
 template class ClassName<AlgTraitsQuad<2>>;                    \
 template class ClassName<AlgTraitsQuad<3>>;                    \
 template class ClassName<AlgTraitsQuad<4>>;                    \

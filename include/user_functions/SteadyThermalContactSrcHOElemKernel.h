@@ -15,6 +15,8 @@
 #include <FieldTypeDef.h>
 #include <AlgTraits.h>
 
+#include <element_promotion/NodeMapMaker.h>
+
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_mesh/base/Entity.hpp>
 #include <memory>
@@ -49,7 +51,7 @@ private:
 
   // fixed scratch space
   CVFEMOperatorsQuad<AlgTraits::polyOrder_> ops_;
-  node_map_view<AlgTraits> v_node_map_{make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>()};
+  node_map_view<AlgTraits> v_node_map_{""};
   nodal_scalar_view<AlgTraits> v_nodalSource_{"v_nodal_source"};
   nodal_scalar_view<AlgTraits> v_vol_{"v_volume_metric"};
   nodal_scalar_view<AlgTraits> v_rhs_{"v_rhs"};

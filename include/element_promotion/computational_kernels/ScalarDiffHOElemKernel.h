@@ -14,6 +14,7 @@
 
 #include <element_promotion/operators/HighOrderOperatorsQuad.h>
 #include <element_promotion/CVFEMTypeDefs.h>
+#include <element_promotion/NodeMapMaker.h>
 #include <FieldTypeDef.h>
 
 #include <stk_mesh/base/Entity.hpp>

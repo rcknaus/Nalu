@@ -18,11 +18,11 @@ namespace tensor_assembly {
 
 template <int nodes1D> int idx(int i, int j) { return i*nodes1D+j; };
 
-template <int poly_order, typename Scalar = DoubleType>
+template <int poly_order, typename Scalar>
 void elemental_diffusion_jacobian(
-  const CVFEMOperatorsQuad<poly_order, Scalar> ops,
-  const scs_tensor_view<AlgTraitsQuad<poly_order>, Scalar> metric,
-  matrix_view<AlgTraitsQuad<poly_order>, Scalar> lhs)
+  const CVFEMOperators<poly_order, Scalar, stk::topology::QUAD_4_2D>& ops,
+  const scs_tensor_view<AlgTraitsQuad<poly_order>, Scalar>& metric,
+  matrix_view<AlgTraitsQuad<poly_order>, Scalar>& lhs)
 {
   constexpr int n1D = AlgTraitsQuad<poly_order>::nodes1D_;
   const auto& mat = ops.mat_;
@@ -141,40 +141,39 @@ void elemental_diffusion_jacobian(
   }
 }
 //--------------------------------------------------------------------------
-template <int poly_order, typename Scalar = DoubleType>
+template <int poly_order, typename Scalar>
 void elemental_diffusion_action(
-  const CVFEMOperatorsQuad<poly_order, Scalar> ops,
-  const scs_tensor_view<AlgTraitsQuad<poly_order>, Scalar> metric,
-  const nodal_scalar_view<AlgTraitsQuad<poly_order>, Scalar> scalar,
-  nodal_scalar_view<AlgTraitsQuad<poly_order>, Scalar> rhs)
+  CVFEMOperators<poly_order, Scalar, stk::topology::QUAD_4_2D>& ops,
+  const scs_tensor_view<AlgTraitsQuad<poly_order>, Scalar>& metric,
+  const nodal_scalar_view<AlgTraitsQuad<poly_order>, Scalar>& scalar,
+  nodal_scalar_view<AlgTraitsQuad<poly_order>, Scalar>& rhs)
 {
-  using ElemTraits = AlgTraitsQuad<poly_order>;
+  using AlgTraits = AlgTraitsQuad<poly_order>;
   
   constexpr int n1D = AlgTraitsQuad<poly_order>::nodes1D_;
   constexpr int nscs = AlgTraitsQuad<poly_order>::nscs_;
 
-//  nodal_scalar_array<ElemTraits> integrand = {};
-  nodal_scalar_view<ElemTraits, Scalar> integrand{""};
-  nodal_vector_view<ElemTraits, Scalar> grad_phi{""};
-  nodal_scalar_view<ElemTraits, Scalar> flux{""};
+  Scalar integrand[AlgTraits::nodes1D_*AlgTraits::nodes1D_];
+  Kokkos::View<nodal_scalar_array<AlgTraits,Scalar>> v_integrand(integrand);
 
-  ops.scs_xhat_grad(scalar, grad_phi);
+  Scalar grad_phi[AlgTraits::nDim_ * AlgTraits::nodes1D_*AlgTraits::nodes1D_];
+  Kokkos::View<nodal_vector_array<AlgTraits,Scalar>> v_grad_phi(grad_phi);
+
+  ops.scs_xhat_grad(scalar, v_grad_phi);
   for (int k = 0; k < nscs; ++k) {
     for (int n = 0; n < n1D; ++n) {
-      integrand(n,k) = metric(XH,XH, k, n) * grad_phi(XH, n, k) + metric(XH,YH, k, n) * grad_phi(YH, n, k);
+      v_integrand(n,k) = metric(XH,XH, k, n) * v_grad_phi(XH, n, k) + metric(XH,YH, k, n) * v_grad_phi(YH, n, k);
     }
   }
-  ops.volume_yhat(integrand, flux);
-  ops.scatter_flux_yhat(flux, rhs);
+  ops.integrate_and_scatter_yhat(v_integrand, rhs);
 
-  ops.scs_yhat_grad(scalar, grad_phi);
-  for (int q = 0; q < nscs; ++q) {
+  ops.scs_yhat_grad(scalar, v_grad_phi);
+  for (int k = 0; k < nscs; ++k) {
     for (int n = 0; n < n1D; ++n) {
-      integrand(q, n) = metric(YH,XH, q, n) * grad_phi(XH, q, n) + metric(YH,YH, q, n) * grad_phi(YH, q, n);
+      v_integrand(k, n) = metric(YH,XH, k, n) * v_grad_phi(XH, k, n) + metric(YH,YH, k, n) * v_grad_phi(YH, k, n);
     }
   }
-  ops.volume_xhat(integrand, flux);
-  ops.scatter_flux_xhat(flux, rhs);
+  ops.integrate_and_scatter_xhat(v_integrand, rhs);
 }
 
 } // namespace HighOrderLaplacianQuad

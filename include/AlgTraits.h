@@ -137,6 +137,24 @@ struct AlgTraitsQuad
   static constexpr stk::topology::topology_t baseTopo_ = stk::topology::QUAD_4_2D;
 };
 
+template <int p>
+struct AlgTraitsHex
+{
+  static constexpr int nDim_ = 3;
+  static constexpr int nodesPerElement_ = (p+1) * (p+1) * (p+1);
+  static constexpr int numScsIp_ = 3 * p * (p+1) * (p+1);
+  static constexpr int numScvIp_ = (p+1) * (p+1) * (p+1);
+  static constexpr int numGp_ = (p+1) * (p+1) * (p+1);
+  static constexpr stk::topology::topology_t topo_ =
+      static_cast<stk::topology::topology_t>(stk::topology::SUPERELEMENT_START + nodesPerElement_);
+
+  // some higher order information
+  static constexpr int polyOrder_ = p;
+  static constexpr int nodes1D_ = p + 1;
+  static constexpr int nscs_ = p;
+  static constexpr stk::topology::topology_t baseTopo_ = stk::topology::HEX_8;
+};
+
 
 
 //template <stk::topology::topology_t stk_topo> struct TopoTraits;

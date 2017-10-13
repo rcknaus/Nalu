@@ -17,6 +17,7 @@
 #include <ElemDataRequests.h>
 #include <master_element/MasterElement.h>
 #include <KokkosInterface.h>
+#include <element_promotion/NodeMapMaker.h>
 
 #include <set>
 #include <type_traits>
@@ -480,6 +481,66 @@ void fill_pre_req_data(ElemDataRequests& dataNeeded,
                        stk::mesh::Entity elem,
                        ScratchViews<double>& prereqData,
                        bool fillMEViews = true);
+
+
+template <int p, template <int p> class AlgTraits> struct FieldGatherer {};
+template <int p> struct FieldGatherer<p, AlgTraitsQuad>
+{
+public:
+  void gather_elem_node_field(const stk::mesh::FieldBase& field,
+    const stk::mesh::Entity* elemNodes,
+    SharedMemView<double**>& shmemView) const
+  {
+    constexpr int n = AlgTraitsQuad<p>::nodes1D_;
+    for (int j = 0; j < n; ++j) {
+      for (int i = 0; i < n; ++i) {
+        shmemView(j,i) = *static_cast<const double*>(stk::mesh::field_data(field, elemNodes[node_map_(j * n + i)]));
+      }
+    }
+  }
+
+  void gather_elem_node_field(const stk::mesh::FieldBase& field,
+    const stk::mesh::Entity* elemNodes,
+    SharedMemView<double***>& shmemView) const
+  {
+    constexpr int n = AlgTraitsQuad<p>::nodes1D_;
+    for (int j = 0; j < n; ++j) {
+      for (int i = 0; i < n; ++i) {
+        const double* dataPtr = static_cast<const double*>(stk::mesh::field_data(field, elemNodes[node_map_(j * n + i)]));
+        shmemView(0,j,i) = dataPtr[0];
+        shmemView(1,j,i) = dataPtr[1];
+      }
+    }
+  }
+private:
+  node_map_view<AlgTraitsQuad<p>> node_map_ {make_node_map<p, stk::topology::QUAD_4_2D>()};
+};
+
+template <typename FieldGatherer>
+void fill_pre_req_data(
+  const FieldGatherer& gatherer,
+  ElemDataRequests& dataNeeded,
+  const stk::mesh::BulkData& bulkData,
+  stk::mesh::Entity elem,
+  ScratchViews<double>& prereqData)
+{
+  prereqData.elemNodes = bulkData.begin_nodes(elem);
+  const FieldSet& neededFields = dataNeeded.get_fields();
+  for(const FieldInfo& fieldInfo : neededFields) {
+    stk::mesh::EntityRank fieldEntityRank = fieldInfo.field->entity_rank();
+    unsigned scalarsDim1 = fieldInfo.scalarsDim1;
+    if (fieldEntityRank == stk::topology::NODE_RANK) {
+      if (scalarsDim1 == 1) {
+        SharedMemView<double**>& shmemView2D = prereqData.get_scratch_view_2D(*fieldInfo.field);
+        gatherer.gather_elem_node_field(*fieldInfo.field, prereqData.elemNodes, shmemView2D);
+      }
+      else {
+        SharedMemView<double***>& shmemView3D = prereqData.get_scratch_view_3D(*fieldInfo.field);
+        gatherer.gather_elem_node_field(*fieldInfo.field, prereqData.elemNodes, shmemView3D);
+      }
+    }
+  }
+}
 
 void fill_master_element_views(ElemDataRequests& dataNeeded,
                                const stk::mesh::BulkData& bulkData,

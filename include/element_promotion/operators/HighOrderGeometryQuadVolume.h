@@ -20,34 +20,33 @@ namespace high_order_metrics
 {
   template <int p, typename Scalar>
   void compute_volume_metric_linear(
-    const CVFEMOperatorsQuad<p, Scalar> ops,
-    const nodal_vector_view<AlgTraitsQuad<p>, Scalar> coordinates,
-    nodal_scalar_view<AlgTraitsQuad<p>, Scalar> vol)
+    const CVFEMOperatorsQuad<p, Scalar>& ops,
+    const nodal_vector_view<AlgTraitsQuad<p>, Scalar>& coord,
+    nodal_scalar_view<AlgTraitsQuad<p>, Scalar>& vol)
   {
-
-    // Computes det(J) at nodes using a linear basis for element geometry
-    Scalar dx_x0 = coordinates(XH, p, 0) - coordinates(XH, 0, 0);
-    Scalar dx_x1 = coordinates(XH, 0, p) - coordinates(XH, 0, 0);
-    Scalar dx_y0 = coordinates(XH, p, p) - coordinates(XH, p, 0);
-    Scalar dx_y1 = coordinates(XH, p, p) - coordinates(XH, 0, p);
-
-    Scalar dy_x0 = coordinates(YH, p, 0) - coordinates(YH, 0, 0);
-    Scalar dy_x1 = coordinates(YH, 0, p) - coordinates(YH, 0, 0);
-    Scalar dy_y0 = coordinates(YH, p, p) - coordinates(YH, p, 0);
-    Scalar dy_y1 = coordinates(YH, p, p) - coordinates(YH, 0, p);
+    enum { E_0 = 0, E_1 = 1, E_2 = 2, E_3 = 3 };
+    const Scalar edgev[4][2] = {
+         { coord(XH, 0, p) - coord(XH, 0, 0), coord(YH, 0, p) - coord(YH, 0, 0) },
+         { coord(XH, p, p) - coord(XH, 0, p), coord(YH, p, p) - coord(YH, 0, p) },
+         { coord(XH, p, 0) - coord(XH, p, p), coord(YH, p, 0) - coord(YH, p, p) },
+         { coord(XH, 0, 0) - coord(XH, p, 0), coord(YH, 0, 0) - coord(YH, p, 0) },
+    };
 
     const auto& mat = ops.mat_;
 
     for (int j = 0; j < p + 1; ++j) {
-      Scalar dx_dyh = mat.linear_nodal_interp(0,j) * dx_x1 + mat.linear_nodal_interp(1,j) * dx_y0;
-      Scalar dy_dyh = mat.linear_nodal_interp(0,j) * dy_x1 + mat.linear_nodal_interp(1,j) * dy_y0;
+      // lift top-bottom edges
+      const Scalar dx_dyh = mat.linear_nodal_interp(0,j) * edgev[E_0][XH] - mat.linear_nodal_interp(1,j) * edgev[E_2][XH];
+      const Scalar dy_dyh = mat.linear_nodal_interp(0,j) * edgev[E_0][YH] - mat.linear_nodal_interp(1,j) * edgev[E_2][YH];
 
       for (int i = 0; i < p + 1; ++i) {
-        Scalar dx_dxh = mat.linear_nodal_interp(0,i) * dx_x0 + mat.linear_nodal_interp(1,i) * dx_y1;
-        Scalar dy_dxh = mat.linear_nodal_interp(0,i) * dy_x0 + mat.linear_nodal_interp(1,i) * dy_y1;
+        //lift left-right edges
+        const Scalar dx_dxh = -mat.linear_nodal_interp(0,i) * edgev[E_1][XH] + mat.linear_nodal_interp(1,i) * edgev[E_3][XH];
+        const Scalar dy_dxh = -mat.linear_nodal_interp(0,i) * edgev[E_1][YH] + mat.linear_nodal_interp(1,i) * edgev[E_3][YH];
 
-        // times divided by 4 for missing factor of a half in the derivatives
-        vol(j,i) = 0.25 * (dx_dyh * dy_dxh  - dx_dxh * dy_dyh);
+        // times divided by 1/4 for missing factor of a half in the derivatives
+        vol(j,i) = 0.25 * (dx_dxh * dy_dyh - dx_dyh * dy_dxh);
+//        std::cout << dy_dyh << std::endl;
       }
     }
   }

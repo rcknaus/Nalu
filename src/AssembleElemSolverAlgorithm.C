@@ -17,6 +17,8 @@
 #include <Realm.h>
 #include <Kernel.h>
 #include <TimeIntegrator.h>
+#include <BuildTemplates.h>
+#include <element_promotion/ElementDescription.h>
 
 // stk_mesh/base/fem
 #include <stk_mesh/base/BulkData.hpp>
@@ -66,6 +68,14 @@ AssembleElemSolverAlgorithm::initialize_connectivity()
   eqSystem_->linsys_->buildElemToNodeGraph(partVec_);
 }
 
+
+// FIXME: move this
+
+FieldGatherer<2, AlgTraitsQuad> gatherer_quad_2;
+FieldGatherer<3, AlgTraitsQuad> gatherer_quad_3;
+FieldGatherer<4, AlgTraitsQuad> gatherer_quad_4;
+FieldGatherer<USER_POLY_ORDER, AlgTraitsQuad> gatherer_quad_user;
+
 //--------------------------------------------------------------------------
 //-------- execute ---------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -74,6 +84,9 @@ AssembleElemSolverAlgorithm::execute()
 {
   stk::mesh::MetaData & meta_data = realm_.meta_data();
   stk::mesh::BulkData & bulk_data = realm_.bulk_data();
+
+
+
 
   // set any data
   const size_t activeKernelsSize = activeKernels_.size();
@@ -149,8 +162,30 @@ AssembleElemSolverAlgorithm::execute()
         // get element
         element = b[bktIndex*simdLen + simdElemIndex];
         elemNodes[simdElemIndex] = bulk_data.begin_nodes(element);
-        fill_pre_req_data(dataNeededByKernels_, bulk_data, topo_, element,
-                          *prereqData[simdElemIndex], interleaveMEViews_);
+
+        if (!topo_.is_super_topology()) {
+          fill_pre_req_data(dataNeededByKernels_, bulk_data, topo_, element,
+                            *prereqData[simdElemIndex], interleaveMEViews_);
+        }
+        else {
+          int poly_order = poly_order_from_super_topology(meta_data.spatial_dimension(), topo_);
+          switch (poly_order) {
+            case 2:
+              fill_pre_req_data(gatherer_quad_2, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
+              break;
+            case 3:
+              fill_pre_req_data(gatherer_quad_3, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
+              break;
+            case 4:
+              fill_pre_req_data(gatherer_quad_4, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
+              break;
+            case USER_POLY_ORDER:
+              fill_pre_req_data(gatherer_quad_user, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
+              break;
+            default:
+              ThrowRequireMsg(false, "Invalid poly order");
+          }
+        }
       }
 
       copy_and_interleave(prereqData, simdElems, simdPrereqData, interleaveMEViews_);

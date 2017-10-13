@@ -26,116 +26,104 @@ public:
   const CoefficientMatrices<poly_order, Scalar> mat_{};
 
   void nodal_grad(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    const nodal_vector_view<AlgTraits, Scalar> grad) const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_vector_view<AlgTraits, Scalar>& grad) const
   {
     // computes reference-element gradient at nodes
-    internal::apply_x<poly_order>(mat_.nodalDeriv, f, Kokkos::subview(grad, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::apply_y<poly_order>(mat_.nodalDeriv, f, Kokkos::subview(grad, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_x<poly_order>(mat_.nodalDeriv, f, grad, XH);
+    internal::apply_y<poly_order>(mat_.nodalDeriv, f, grad, YH);
   }
   //--------------------------------------------------------------------------
   void scs_yhat_grad(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_vector_view<AlgTraits, Scalar> grad)  const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_vector_view<AlgTraits, Scalar>& grad) const
   {
     // computes reference-element at scs of constant yhat coordinate
-    internal::Dx_yhat<poly_order>(mat_.scsInterp, mat_.nodalDeriv, f, Kokkos::subview(grad, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::Dy_yhat<poly_order>(mat_.scsDeriv, f, Kokkos::subview(grad, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_yx<poly_order>(mat_.scsInterp, mat_.nodalDeriv, f, grad, XH);
+    internal::apply_y<poly_order>(mat_.scsDeriv, f, grad, YH);
   }
   //--------------------------------------------------------------------------
   void scs_xhat_grad(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_vector_view<AlgTraits, Scalar> grad)  const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_vector_view<AlgTraits, Scalar>& grad)  const
   {
     // computes reference-element gradient at scs of constant xhat coordinate
-    internal::Dx_xhat<poly_order>(mat_.scsDeriv, f, Kokkos::subview(grad, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::Dy_xhat<poly_order>(mat_.scsInterp, mat_.nodalDeriv, f, Kokkos::subview(grad, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_x<poly_order>(mat_.scsDeriv, f, grad, XH);
+    internal::apply_xy<poly_order>(mat_.scsInterp, mat_.nodalDeriv, f, grad, YH);
   }
   //--------------------------------------------------------------------------
   void scs_xhat_interp(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_scalar_view<AlgTraits, Scalar> fIp) const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& fIp) const
   {
     // interpolates f to the scs of constant xhat coordinate
     internal::apply_x<poly_order>(mat_.scsInterp, f, fIp);
   }
   //--------------------------------------------------------------------------
   void scs_yhat_interp(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_scalar_view<AlgTraits, Scalar> fIp) const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& fIp) const
   {
     // interpolates f to the scs of constant yhat coordinate
     internal::apply_y<poly_order>(mat_.scsInterp, f, fIp);
   }
   //--------------------------------------------------------------------------
   void scs_xhat_interp(
-    const nodal_vector_view<AlgTraits, Scalar> f,
-    nodal_vector_view<AlgTraits, Scalar> fIp) const
+    const nodal_vector_view<AlgTraits, Scalar>& f,
+    nodal_vector_view<AlgTraits, Scalar>& fIp) const
   {
     // interpolates f to the scs of constant xhat coordinate
-    internal::apply_x<poly_order>(mat_.scsInterp, Kokkos::subview(f, 0, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::apply_x<poly_order>(mat_.scsInterp, Kokkos::subview(f, 1, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_x<poly_order>(mat_.scsInterp, f, XH, fIp, XH);
+    internal::apply_x<poly_order>(mat_.scsInterp, f, YH, fIp, YH);
   }
   //--------------------------------------------------------------------------
   void scs_yhat_interp(
-    const nodal_vector_view<AlgTraits, Scalar> f,
-    nodal_vector_view<AlgTraits, Scalar> fIp) const
+    const nodal_vector_view<AlgTraits, Scalar>& f,
+    nodal_vector_view<AlgTraits, Scalar>& fIp) const
   {
     // interpolates f to the scs of constant yhat coordinate
-    internal::apply_y<poly_order>(mat_.scsInterp, Kokkos::subview(f, 0, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 0, Kokkos::ALL, Kokkos::ALL));
-    internal::apply_y<poly_order>(mat_.scsInterp, Kokkos::subview(f, 1, Kokkos::ALL, Kokkos::ALL), Kokkos::subview(fIp, 1, Kokkos::ALL, Kokkos::ALL));
+    internal::apply_y<poly_order>(mat_.scsInterp, f, XH, fIp, XH);
+    internal::apply_y<poly_order>(mat_.scsInterp, f, YH, fIp, YH);
   }
   //--------------------------------------------------------------------------
   void volume_xhat(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_scalar_view<AlgTraits, Scalar> f_bar) const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& f_bar) const
   {
     // integrates along the xhat direction
     internal::apply_x<poly_order>(mat_.nodalWeights, f, f_bar);
   }
   //--------------------------------------------------------------------------
   void volume_yhat(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_scalar_view<AlgTraits, Scalar> f_bar) const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& f_bar) const
   {
     // integrates along the yhat direction
     internal::apply_y<poly_order>(mat_.nodalWeights, f, f_bar);
   }
   //--------------------------------------------------------------------------
   void volume_2D(
-    const nodal_scalar_view<AlgTraits, Scalar> f,
-    nodal_scalar_view<AlgTraits, Scalar> f_bar) const
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& f_bar) const
   {
     // integrates volumetrically
     internal::apply_xy<poly_order>(mat_.nodalWeights, mat_.nodalWeights, f, f_bar);
   }
   //--------------------------------------------------------------------------
-  void scatter_flux_xhat(
-    const nodal_scalar_view<AlgTraits, Scalar> flux,
-    nodal_scalar_view<AlgTraits, Scalar> residual) const
+  void integrate_and_scatter_xhat(
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& f_bar) const
   {
-    // +/- fluxes to adjacent left/right nodes
-    for (unsigned n = 0; n < poly_order+1; ++n) {
-      residual(0,n) -= flux(0,n);
-      for (unsigned p = 1; p < poly_order; ++p) {
-        residual(p,n) -= flux(p,n) - flux(p-1,n);
-      }
-      residual(poly_order,n) += flux(poly_order-1,n);
-    }
+    // integrates along the xhat direction and differences the resulting flux
+    internal::apply_x_and_scatter<poly_order>(mat_.nodalWeights, f, f_bar);
   }
   //--------------------------------------------------------------------------
-  void scatter_flux_yhat(
-    const nodal_scalar_view<AlgTraits, Scalar> flux,
-    nodal_scalar_view<AlgTraits, Scalar> residual) const
+  void integrate_and_scatter_yhat(
+    const nodal_scalar_view<AlgTraits, Scalar>& f,
+    nodal_scalar_view<AlgTraits, Scalar>& f_bar) const
   {
-    // +/- fluxes to adjacent left/right nodes
-    for (unsigned m = 0; m < poly_order+1; ++m) {
-      residual(m,0) -= flux(m, 0);
-      for (unsigned p = 1; p < poly_order; ++p) {
-        residual(m,p) -= flux(m, p) - flux(m, p - 1);
-      }
-      residual(m, poly_order) += flux(m, poly_order-1);
-    }
+    // integrates along the yhat direction and differences the resulting flux
+    internal::apply_y_and_scatter<poly_order>(mat_.nodalWeights, f, f_bar);
   }
 };
 

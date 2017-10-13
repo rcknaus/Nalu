@@ -4,31 +4,29 @@
 /*  in the file, LICENSE, which is located in the top-level NaluUnit      */
 /*  directory structure                                                   */
 /*------------------------------------------------------------------------*/
-#ifndef HighOrderSourceQuad_h
-#define HighOrderSourceQuad_h
+#ifndef MappedElementMatrixGather_h
+#define MappedElementMatrixGather_h
 
 #include <element_promotion/operators/HighOrderOperatorsQuad.h>
 #include <element_promotion/operators/CoefficientMatrices.h>
 #include <element_promotion/CVFEMTypeDefs.h>
 
+// todo(rcknaus): consider removing the need for this
+
 namespace sierra {
 namespace nalu {
 namespace tensor_assembly {
-  template <int poly_order>
-  void add_volumetric_source(
-    const CVFEMOperatorsQuad<poly_order>& ops,
-    const nodal_scalar_view<AlgTraitsQuad<poly_order>>& volume_metric,
-    const nodal_scalar_view<AlgTraitsQuad<poly_order>>& nodal_source,
-    nodal_scalar_view<AlgTraitsQuad<poly_order>>& rhs)
+
+  template <int p>
+  void gather_elem_node_field(
+    const node_map_view<AlgTraitsQuad<p>>& nodeMap,
+    const stk::mesh::FieldBase& field,
+    const stk::mesh::Entity* elemNodes,
+    SharedMemView<double*>& shmemView)
   {
-    constexpr int n1D = AlgTraitsQuad<poly_order>::nodes1D_;
-    for (int j = 0; j < n1D; ++j) {
-      for (int i = 0; i < n1D; ++i) {
-        nodal_source(j,i) *= volume_metric(j,i);
-      }
-    }
-    ops.volume_2D(nodal_source, rhs);
+
   }
+
 } // namespace TensorAssembly
 } // namespace naluUnit
 } // namespace Sierra

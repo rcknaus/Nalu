@@ -56,6 +56,7 @@ void gather_elem_tensor_field(const stk::mesh::FieldBase& field,
   }
 }
 
+
 inline
 void gather_elem_node_field_3D(const stk::mesh::FieldBase& field,
                             int numNodes,
@@ -69,6 +70,23 @@ void gather_elem_node_field_3D(const stk::mesh::FieldBase& field,
     shmemView(i,2) = dataPtr[2];
   }
 }
+
+
+template <typename AlgTraits> void gather_mapped_node_field_3D(const stk::mesh::FieldBase& field,
+                            int numNodes,
+                            const stk::mesh::Entity* elemNodes,
+                            SharedMemView<double**>& shmemView)
+{
+  for(int i=0; i<numNodes; ++i) {
+    const double* dataPtr = static_cast<const double*>(stk::mesh::field_data(field, elemNodes[i]));
+    shmemView(i,0) = dataPtr[0];
+    shmemView(i,1) = dataPtr[1];
+    shmemView(i,2) = dataPtr[2];
+  }
+}
+
+
+
 
 inline
 void gather_elem_node_field(const stk::mesh::FieldBase& field,

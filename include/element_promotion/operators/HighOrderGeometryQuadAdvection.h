@@ -15,7 +15,9 @@
 
 #include <stk_util/environment/ReportHandler.hpp>
 
-namespace sierra { namespace nalu { namespace high_order_metrics {
+namespace sierra {
+namespace nalu {
+namespace high_order_metrics {
 
   template <int p> // polynomial order
   void compute_advection_metric_linear(
@@ -48,8 +50,6 @@ namespace sierra { namespace nalu { namespace high_order_metrics {
       const ftype dx_dxh = -scs_interp(0,j) * edgev[E_3][XH] + scs_interp(1,j) * edgev[E_1][XH];
       for (int i = 0; i < p + 1; ++i) {
         const ftype dy_dxh = -nodal_interp(0,i) * edgev[E_3][YH] + nodal_interp(1,i) * edgev[E_1][YH];
-
-//        std::cout << "(" <<  rhou(XH,j,i) << ", " << rhou(YH,j,i) << ")" << std::endl;
         metric(XH,j,i) =  dy_dxh * rhou(XH, j, i) - dx_dxh * rhou(YH, j, i);
       }
     }
@@ -65,7 +65,7 @@ namespace sierra { namespace nalu { namespace high_order_metrics {
     }
   }
 
-  template <int p> // polynomial order
+  template <int p>
     void compute_advection_metric_linear(
       const CVFEMOperators<p, stk::topology::QUADRILATERAL_4_2D> ops,
       const nodal_vector_view<AlgTraitsQuad<p>> coord,
@@ -76,8 +76,6 @@ namespace sierra { namespace nalu { namespace high_order_metrics {
     {
       ThrowRequireMsg(false, "Mass-corrected advection metric not implemented yet");
     }
-
-
 } // namespace HighOrderGeometryQuad
 } // namespace naluUnit
 } // namespace Sierra

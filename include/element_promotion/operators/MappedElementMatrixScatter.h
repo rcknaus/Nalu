@@ -19,11 +19,11 @@ namespace tensor_assembly {
 
   template <int p, typename LHSViewType, typename RHSViewType>
   void mapped_scatter(
-    node_map_view<AlgTraitsQuad<p>> node_map,
-    const matrix_view<AlgTraitsQuad<p>> mapped_lhs,
-    const nodal_scalar_view<AlgTraitsQuad<p>> mapped_rhs,
-    LHSViewType lhs,
-    RHSViewType rhs)
+    node_map_view<AlgTraitsQuad<p>>& node_map,
+    const matrix_view<AlgTraitsQuad<p>>& mapped_lhs,
+    const nodal_scalar_view<AlgTraitsQuad<p>>& mapped_rhs,
+    LHSViewType& lhs,
+    RHSViewType& rhs)
   {
     // directly modify the suminto?
 

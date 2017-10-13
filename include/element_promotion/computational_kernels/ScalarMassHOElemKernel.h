@@ -14,6 +14,7 @@
 
 #include <element_promotion/operators/HighOrderOperatorsQuad.h>
 #include <element_promotion/CVFEMTypeDefs.h>
+#include <element_promotion/NodeMapMaker.h>
 #include <FieldTypeDef.h>
 
 #include <stk_mesh/base/Entity.hpp>
@@ -54,10 +55,7 @@ private:
 
   VectorFieldType* coordinates_{nullptr};
 
-  double dt_{0.0};
-  double gamma1_{0.0};
-  double gamma2_{0.0};
-  double gamma3_{0.0};
+  double gamma_[3];
 
   CVFEMOperators<AlgTraits::polyOrder_, DoubleType, AlgTraits::baseTopo_> ops_{};
   node_map_view<AlgTraits> v_node_map_{ make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>() };
