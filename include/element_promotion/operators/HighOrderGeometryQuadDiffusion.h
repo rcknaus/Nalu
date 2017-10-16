@@ -84,7 +84,6 @@ namespace high_order_metrics
     constexpr int numEdges = 4;
     constexpr int nodesPerEdge = 2;
 
-    // mapped coords
     const Scalar edgev[numEdges][nodesPerEdge] = {
          { coord(XH, p, 0) - coord(XH, 0, 0), coord(YH, p, 0) - coord(YH, 0, 0) },
          { coord(XH, p, p) - coord(XH, p, 0), coord(YH, p, p) - coord(YH, p, 0) },
@@ -97,6 +96,7 @@ namespace high_order_metrics
 
     Scalar scratch_diffIp[AlgTraitsQuad<p>::nodesPerElement_];
     nodal_scalar_view<AlgTraitsQuad<p>, Scalar> diffIp(scratch_diffIp);
+
     ops.scs_xhat_interp(diffusivity, diffIp);
 
     for (int j = 0; j < p; ++j) {

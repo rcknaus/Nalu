@@ -134,6 +134,7 @@ struct AlgTraitsQuad
   static constexpr int polyOrder_ = p;
   static constexpr int nodes1D_ = p + 1;
   static constexpr int nscs_ = p;
+  static constexpr int metric_size = nDim_ * nDim_ * nscs_ * nodes1D_;
   static constexpr stk::topology::topology_t baseTopo_ = stk::topology::QUAD_4_2D;
 };
 
@@ -152,20 +153,9 @@ struct AlgTraitsHex
   static constexpr int polyOrder_ = p;
   static constexpr int nodes1D_ = p + 1;
   static constexpr int nscs_ = p;
+  static constexpr int metric_size = nDim_ * nDim_ * nscs_ * nodes1D_ * nodes1D_;
   static constexpr stk::topology::topology_t baseTopo_ = stk::topology::HEX_8;
 };
-
-
-
-//template <stk::topology::topology_t stk_topo> struct TopoTraits;
-//template <> struct TopoTraits<stk::topology::TRIANGLE_3_2D> { using AlgTraits = AlgTraitsTri3_2D; };
-//template <> struct TopoTraits<stk::topology::QUADRILATERAL_4_2D> { using AlgTraits = AlgTraitsQuad4_2D; };
-//template <> struct TopoTraits<stk::topology::TET_4> { using AlgTraits = AlgTraitsTet4; };
-//template <> struct TopoTraits<stk::topology::PYRAMID_5> { using AlgTraits = AlgTraitsPyr5; };
-//template <> struct TopoTraits<stk::topology::WEDGE_6> { using AlgTraits = AlgTraitsWed6; };
-//template <> struct TopoTraits<stk::topology::HEX_8> { using AlgTraits = AlgTraitsHex8; };
-//template <stk::topology::topology_t stk_topo> using AlgTraits = typename TopoTraits<stk_topo>::AlgTraits;
-
 
 } // namespace nalu
 } // namespace Sierra

@@ -12,6 +12,7 @@
 #include<SolverAlgorithm.h>
 #include<ElemDataRequests.h>
 #include<FieldTypeDef.h>
+#include <ScratchViews.h>
 
 namespace stk {
 namespace mesh {
@@ -45,6 +46,7 @@ public:
   ElemDataRequests dataNeededByKernels_;
   int rhsSize_;
   const bool interleaveMEViews_;
+  std::unique_ptr<FieldGatherer> gatherer_;
 
 };
 

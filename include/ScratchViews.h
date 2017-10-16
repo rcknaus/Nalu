@@ -18,6 +18,8 @@
 #include <master_element/MasterElement.h>
 #include <KokkosInterface.h>
 #include <element_promotion/NodeMapMaker.h>
+#include <BuildTemplates.h>
+
 
 #include <set>
 #include <type_traits>
@@ -483,15 +485,16 @@ void fill_pre_req_data(ElemDataRequests& dataNeeded,
                        bool fillMEViews = true);
 
 
-template <int p, template <int> class AlgTraits> struct FieldGatherer {};
-template <int p> struct FieldGatherer<p, AlgTraitsQuad>
+struct FieldGatherer
 {
 public:
+  FieldGatherer(int p, stk::topology::topology_t topo) : order_(p), topo_(topo), node_map_(make_node_map(p, topo)) {};
+
   void gather_elem_node_field(const stk::mesh::FieldBase& field,
     const stk::mesh::Entity* elemNodes,
     SharedMemView<double**>& shmemView) const
   {
-    constexpr int n = AlgTraitsQuad<p>::nodes1D_;
+    const int n = order_ + 1;
     for (int j = 0; j < n; ++j) {
       for (int i = 0; i < n; ++i) {
         shmemView(j,i) = *static_cast<const double*>(stk::mesh::field_data(field, elemNodes[node_map_(j * n + i)]));
@@ -503,7 +506,7 @@ public:
     const stk::mesh::Entity* elemNodes,
     SharedMemView<double***>& shmemView) const
   {
-    constexpr int n = AlgTraitsQuad<p>::nodes1D_;
+    const int n = order_ + 1;
     for (int j = 0; j < n; ++j) {
       for (int i = 0; i < n; ++i) {
         const double* dataPtr = static_cast<const double*>(stk::mesh::field_data(field, elemNodes[node_map_(j * n + i)]));
@@ -513,11 +516,12 @@ public:
     }
   }
 private:
-  node_map_view<AlgTraitsQuad<p>> node_map_ {make_node_map<p, stk::topology::QUAD_4_2D>()};
+  int order_;
+  stk::topology::topology_t topo_;
+  Kokkos::View<int*> node_map_;
 };
 
-template <typename FieldGatherer>
-void fill_pre_req_data(
+inline void fill_pre_req_data(
   const FieldGatherer& gatherer,
   ElemDataRequests& dataNeeded,
   const stk::mesh::BulkData& bulkData,

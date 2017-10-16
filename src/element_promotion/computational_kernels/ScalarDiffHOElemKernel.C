@@ -82,7 +82,7 @@ ScalarDiffHOElemKernel<AlgTraits>::execute(
 
   DoubleType scratch_metric[AlgTraits::nDim_*AlgTraits::nDim_*AlgTraits::nscs_*AlgTraits::nodes1D_];
   scs_tensor_view<AlgTraits, DoubleType> v_metric(scratch_metric);
-//
+
   high_order_metrics::compute_diffusion_metric_linear(ops_, v_coords, v_diff, v_metric);
   tensor_assembly::elemental_diffusion_jacobian(ops_, v_metric, v_lhs);
   tensor_assembly::elemental_diffusion_action(ops_, v_metric, v_scalar, v_rhs);

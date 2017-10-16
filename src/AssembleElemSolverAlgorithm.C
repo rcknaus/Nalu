@@ -19,6 +19,7 @@
 #include <TimeIntegrator.h>
 #include <BuildTemplates.h>
 #include <element_promotion/ElementDescription.h>
+#include <nalu_make_unique.h>
 
 // stk_mesh/base/fem
 #include <stk_mesh/base/BulkData.hpp>
@@ -57,6 +58,10 @@ AssembleElemSolverAlgorithm::AssembleElemSolverAlgorithm(
     rhsSize_(theTopo.num_nodes()*eqSystem->linsys_->numDof()),
     interleaveMEViews_(interleaveMEViews)
 {
+  if (theTopo.is_super_topology() && realm_.spatialDimension_ == 2u) {
+    int poly_order = poly_order_from_super_topology(realm_.spatialDimension_, topo_);
+    gatherer_ = make_unique<FieldGatherer>(poly_order, stk::topology::QUAD_4_2D);
+  }
 }
 
 //--------------------------------------------------------------------------
@@ -68,14 +73,6 @@ AssembleElemSolverAlgorithm::initialize_connectivity()
   eqSystem_->linsys_->buildElemToNodeGraph(partVec_);
 }
 
-
-// FIXME: move this
-
-static FieldGatherer<2, AlgTraitsQuad> gatherer_quad_2;
-static FieldGatherer<3, AlgTraitsQuad> gatherer_quad_3;
-static FieldGatherer<4, AlgTraitsQuad> gatherer_quad_4;
-static FieldGatherer<USER_POLY_ORDER, AlgTraitsQuad> gatherer_quad_user;
-
 //--------------------------------------------------------------------------
 //-------- execute ---------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -84,8 +81,6 @@ AssembleElemSolverAlgorithm::execute()
 {
   stk::mesh::MetaData & meta_data = realm_.meta_data();
   stk::mesh::BulkData & bulk_data = realm_.bulk_data();
-
-
 
 
   // set any data
@@ -163,28 +158,12 @@ AssembleElemSolverAlgorithm::execute()
         element = b[bktIndex*simdLen + simdElemIndex];
         elemNodes[simdElemIndex] = bulk_data.begin_nodes(element);
 
-        if (!topo_.is_super_topology()) {
+        if (!(topo_.is_super_topology() && meta_data.spatial_dimension() == 2u)) {
           fill_pre_req_data(dataNeededByKernels_, bulk_data, topo_, element,
                             *prereqData[simdElemIndex], interleaveMEViews_);
         }
         else {
-          int poly_order = poly_order_from_super_topology(meta_data.spatial_dimension(), topo_);
-          switch (poly_order) {
-            case 2:
-              fill_pre_req_data(gatherer_quad_2, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
-              break;
-            case 3:
-              fill_pre_req_data(gatherer_quad_3, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
-              break;
-            case 4:
-              fill_pre_req_data(gatherer_quad_4, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
-              break;
-            case USER_POLY_ORDER:
-              fill_pre_req_data(gatherer_quad_user, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
-              break;
-            default:
-              ThrowRequireMsg(false, "Invalid poly order");
-          }
+          fill_pre_req_data(*gatherer_, dataNeededByKernels_, bulk_data, element, *prereqData[simdElemIndex]);
         }
       }
 
