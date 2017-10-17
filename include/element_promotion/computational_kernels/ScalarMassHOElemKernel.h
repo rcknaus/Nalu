@@ -48,10 +48,8 @@ private:
   ScalarFieldType* scalarNm1_{nullptr};
   ScalarFieldType* scalarN_{nullptr};
   ScalarFieldType* scalarNp1_{nullptr};
-
-  ScalarFieldType* densityNm1_{nullptr};
-  ScalarFieldType* densityN_{nullptr};
-  ScalarFieldType* densityNp1_{nullptr};
+  ScalarFieldType* density_{nullptr};
+  ScalarFieldType* specificHeat_{nullptr};
 
   VectorFieldType* coordinates_{nullptr};
 
@@ -59,20 +57,6 @@ private:
 
   CVFEMOperators<AlgTraits::polyOrder_, DoubleType, AlgTraits::baseTopo_> ops_{};
   node_map_view<AlgTraits> v_node_map_{ make_node_map<AlgTraits::polyOrder_, AlgTraits::baseTopo_>() };
-
-//  nodal_scalar_view<AlgTraits> v_scalarNm1_{"scalarnm1"};
-//  nodal_scalar_view<AlgTraits> v_scalarNp0_{"scalarn"};
-//  nodal_scalar_view<AlgTraits> v_scalarNp1_{"scalarnp1"};
-//
-//  nodal_scalar_view<AlgTraits> v_rhoNm1_{"rhonm1"};
-//  nodal_scalar_view<AlgTraits> v_rhoNp0_{"rhon"};
-//  nodal_scalar_view<AlgTraits> v_rhoNp1_{"rhonp1"};
-//
-//  nodal_vector_view<AlgTraits> v_coords_{"coords"};
-//  nodal_scalar_view<AlgTraits> v_vol_{"volume_metric"};
-//  nodal_scalar_view<AlgTraits> v_time_derivative_{"dqdt"};
-//  matrix_view<AlgTraits> v_lhs_{"scalar_ho_advdiff_lhs"};
-//  nodal_scalar_view<AlgTraits> v_rhs_{"scalar_ho_advdiff_rhs"};
 };
 
 } // namespace nalu

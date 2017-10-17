@@ -16,6 +16,8 @@
 #include <element_promotion/operators/HighOrderOperatorsQuad.h>
 #include <element_promotion/operators/HighOrderGeometryQuadVolume.h>
 #include <element_promotion/operators/HighOrderSourceQuad.h>
+#include <element_promotion/operators/HighOrderSourceQuad.h>
+#include <element_promotion/operators/MappedElementMatrixScatter.h>
 
 #include <BuildTemplates.h>
 #include <ScratchViews.h>
@@ -56,27 +58,28 @@ SteadyThermalContactSrcHOElemKernel<AlgTraits>::execute(
   SharedMemView<DoubleType*>& rhs,
   ScratchViews<DoubleType>& scratchViews)
 {
-//  SharedMemView<DoubleType**>& v_flatCoords = scratchViews.get_scratch_view_2D(*coordinates_);
-//
-//  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-//    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-//      int nodeId = v_node_map_(j*AlgTraits::nodes1D_+i);
-//      v_coords_(XH,j,i) = v_flatCoords(nodeId, XH);
-//      v_coords_(YH,j,i) = v_flatCoords(nodeId, YH);
-//      v_nodalSource_(j,i) = k_/4.0*(2.0*a_*pi_)*(2.0*a_*pi_)*
-//          (stk::math::cos(2.0*a_*pi_*v_coords_(XH,j,i)) + stk::math::cos(2.0*a_*pi_*v_coords_(YH,j,i)));
-//    }
-//  }
-//
-//  Kokkos::deep_copy(v_rhs_, DoubleType(0.0));
-//  high_order_metrics::compute_volume_metric_linear(ops_, v_coords_, v_vol_);
-//  tensor_assembly::add_volumetric_source(ops_, v_vol_, v_nodalSource_, v_rhs_);
-//
-//  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
-//    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
-//      rhs(v_node_map_(j* AlgTraits::nodes1D_ +i)) += v_rhs_(j,i);
-//    }
-//  }
+  nodal_vector_view<AlgTraits, DoubleType> v_coords(scratchViews.get_scratch_view_3D(*coordinates_));
+
+  DoubleType nodalSource[AlgTraits::nodesPerElement_];
+  nodal_scalar_view<AlgTraits, DoubleType> v_nodalSource(nodalSource);
+
+  for (int j = 0; j < AlgTraits::nodes1D_; ++j) {
+    for (int i = 0; i < AlgTraits::nodes1D_; ++i) {
+      v_nodalSource(j,i) = k_/4.0*(2.0*a_*pi_)*(2.0*a_*pi_)*
+          (stk::math::cos(2.0*a_*pi_*v_coords(XH,j,i)) + stk::math::cos(2.0*a_*pi_*v_coords(YH,j,i)));
+    }
+  }
+
+  DoubleType vol[AlgTraits::nodesPerElement_];
+  nodal_scalar_view<AlgTraits, DoubleType> v_vol(vol);
+
+  DoubleType elem_rhs[AlgTraits::nodesPerElement_];
+  nodal_scalar_view<AlgTraits,DoubleType> v_rhs(elem_rhs);
+  Kokkos::deep_copy(v_rhs, 0.0);
+
+  high_order_metrics::compute_volume_metric_linear(ops_, v_coords, v_vol);
+  tensor_assembly::add_volumetric_source(ops_, v_vol, v_nodalSource, v_rhs);
+  tensor_assembly::mapped_scatter<AlgTraits::polyOrder_>(v_node_map_, v_rhs, rhs);
 }
 
 INSTANTIATE_KERNEL_2D_HOSGL(SteadyThermalContactSrcHOElemKernel);

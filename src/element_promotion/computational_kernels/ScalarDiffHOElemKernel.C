@@ -39,6 +39,20 @@
 namespace sierra{
 namespace nalu{
 
+template <typename ShmemViewType, int length>
+struct ScratchArray
+{
+  using value_type = typename ShmemViewType::value_type;
+public:
+  ScratchArray(value_type val) { Kokkos::deep_copy(view_, val); };
+  ScratchArray() = default;
+  ShmemViewType& view() { return view_; };
+private:
+  std::array<value_type,length> data_;
+  ShmemViewType view_{data_.data()};
+};
+
+
 template<class AlgTraits>
 ScalarDiffHOElemKernel<AlgTraits>::ScalarDiffHOElemKernel(
   const stk::mesh::BulkData& bulkData,
@@ -71,17 +85,16 @@ ScalarDiffHOElemKernel<AlgTraits>::execute(
   nodal_scalar_view<AlgTraits, DoubleType> v_scalar(scratchViews.get_scratch_view_2D(*scalarQ_));
   nodal_scalar_view<AlgTraits, DoubleType> v_diff(scratchViews.get_scratch_view_2D(*diffFluxCoeff_));
 
-  DoubleType scratch_lhs[AlgTraits::nodesPerElement_*AlgTraits::nodesPerElement_];
-  matrix_view<AlgTraits, DoubleType> v_lhs(scratch_lhs);
+  DoubleType elem_lhs[AlgTraits::lhsSize_];
+  matrix_view<AlgTraits, DoubleType> v_lhs(elem_lhs);
+  Kokkos::deep_copy(v_lhs, 0.0);
 
-  DoubleType scratch_rhs[AlgTraits::nodesPerElement_];
-  nodal_scalar_view<AlgTraits, DoubleType> v_rhs(scratch_rhs);
+  DoubleType elem_rhs[AlgTraits::nodesPerElement_];
+  nodal_scalar_view<AlgTraits, DoubleType> v_rhs(elem_rhs);
+  Kokkos::deep_copy(v_rhs, 0.0);
 
-  Kokkos::deep_copy(v_lhs, DoubleType(0.0));
-  Kokkos::deep_copy(v_rhs, DoubleType(0.0));
-
-  DoubleType scratch_metric[AlgTraits::nDim_*AlgTraits::nDim_*AlgTraits::nscs_*AlgTraits::nodes1D_];
-  scs_tensor_view<AlgTraits, DoubleType> v_metric(scratch_metric);
+  DoubleType elem_metric[AlgTraits::metricSize_];
+  scs_tensor_view<AlgTraits, DoubleType> v_metric(elem_metric);
 
   high_order_metrics::compute_diffusion_metric_linear(ops_, v_coords, v_diff, v_metric);
   tensor_assembly::elemental_diffusion_jacobian(ops_, v_metric, v_lhs);

@@ -60,7 +60,6 @@ struct AlgTraitsWed6 {
 
 };
 
-
 struct AlgTraitsQuad4_2D {
   static constexpr int nDim_ = 2;
   static constexpr int nodesPerElement_ = 4;
@@ -134,7 +133,8 @@ struct AlgTraitsQuad
   static constexpr int polyOrder_ = p;
   static constexpr int nodes1D_ = p + 1;
   static constexpr int nscs_ = p;
-  static constexpr int metric_size = nDim_ * nDim_ * nscs_ * nodes1D_;
+  static constexpr int metricSize_ = nDim_ * nDim_ * nscs_ * nodes1D_;
+  static constexpr int lhsSize_ = nodesPerElement_ * nodesPerElement_;
   static constexpr stk::topology::topology_t baseTopo_ = stk::topology::QUAD_4_2D;
 };
 
@@ -153,7 +153,8 @@ struct AlgTraitsHex
   static constexpr int polyOrder_ = p;
   static constexpr int nodes1D_ = p + 1;
   static constexpr int nscs_ = p;
-  static constexpr int metric_size = nDim_ * nDim_ * nscs_ * nodes1D_ * nodes1D_;
+  static constexpr int metricSize_ = nDim_ * nDim_ * nscs_ * nodes1D_ * nodes1D_;
+  static constexpr int lhsSize_ = nodesPerElement_ * nodesPerElement_;
   static constexpr stk::topology::topology_t baseTopo_ = stk::topology::HEX_8;
 };
 

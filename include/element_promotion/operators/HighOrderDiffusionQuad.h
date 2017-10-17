@@ -155,9 +155,11 @@ void elemental_diffusion_action(
 
   Scalar integrand[AlgTraits::nodes1D_*AlgTraits::nodes1D_];
   nodal_scalar_view<AlgTraits,Scalar> v_integrand(integrand);
+  Kokkos::deep_copy(v_integrand, 0.0);
 
   Scalar grad_phi[AlgTraits::nDim_ * AlgTraits::nodes1D_*AlgTraits::nodes1D_];
   nodal_vector_view<AlgTraits,Scalar> v_grad_phi(grad_phi);
+  Kokkos::deep_copy(v_grad_phi, 0.0);
 
   ops.scs_xhat_grad(scalar, v_grad_phi);
   for (int k = 0; k < nscs; ++k) {

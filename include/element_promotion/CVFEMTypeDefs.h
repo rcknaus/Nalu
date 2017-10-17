@@ -33,7 +33,7 @@ namespace sierra { namespace nalu {
   
   template <typename AlgTraits, typename Scalar = default_float_type>
   using nodal_scalar_view = ViewType<nodal_scalar_array<AlgTraits,Scalar>>;
-  //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
   template <typename AlgTraits, typename Scalar = default_float_type>
   using nodal_vector_array = Scalar[AlgTraits::nDim_][AlgTraits::nodes1D_][AlgTraits::nodes1D_];
 

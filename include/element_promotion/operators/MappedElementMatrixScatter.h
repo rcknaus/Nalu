@@ -25,7 +25,7 @@ namespace tensor_assembly {
     LHSViewType& lhs,
     RHSViewType& rhs)
   {
-    // directly modify the suminto?
+    // directly modify the suminto?  probably move this to the assemblelemsolver at least
 
     constexpr int npe = AlgTraitsQuad<p>::nodesPerElement_;
     constexpr int n1D = AlgTraitsQuad<p>::nodes1D_;
@@ -36,6 +36,20 @@ namespace tensor_assembly {
       }
     }
 
+    for (int j = 0; j < n1D; ++j) {
+      for (int i = 0; i < n1D; ++i) {
+        rhs(node_map(j*n1D +i)) += mapped_rhs(j,i);
+      }
+    }
+  }
+
+  template <int p,typename RHSViewType>
+  void mapped_scatter(
+    node_map_view<AlgTraitsQuad<p>>& node_map,
+    const nodal_scalar_view<AlgTraitsQuad<p>>& mapped_rhs,
+    RHSViewType& rhs)
+  {
+    constexpr int n1D = AlgTraitsQuad<p>::nodes1D_;
     for (int j = 0; j < n1D; ++j) {
       for (int i = 0; i < n1D; ++i) {
         rhs(node_map(j*n1D +i)) += mapped_rhs(j,i);

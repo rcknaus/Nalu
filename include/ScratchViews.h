@@ -130,6 +130,11 @@ private:
                                  const stk::mesh::BulkData& bulkData,
                                  int nodesPerElem);
 
+  void create_needed_field_views_tensor(const TeamHandleType& team,
+                                 const ElemDataRequests& dataNeeded,
+                                 const stk::mesh::BulkData& bulkData,
+                                 int order);
+
   void create_needed_master_element_views(const TeamHandleType& team,
                                           const ElemDataRequests& dataNeeded,
                                           int nDim, int nodesPerElem,
@@ -398,8 +403,13 @@ ScratchViews<T>::ScratchViews(const TeamHandleType& team,
   int numScvIp = meSCV != nullptr ? meSCV->numIntPoints_ : 0;
   int numFemIp = meFEM != nullptr ? meFEM->numIntPoints_ : 0;
 
-  create_needed_field_views(team, dataNeeded, bulkData, nodesPerElem);
-
+  if (!topo.is_super_topology()) {
+    create_needed_field_views(team, dataNeeded, bulkData, nodesPerElem);
+  }
+  else {
+    int order = poly_order_from_super_topology(bulkData.mesh_meta_data().spatial_dimension(), topo);
+    create_needed_field_views_tensor(team, dataNeeded, bulkData, order);
+  }
   create_needed_master_element_views(team, dataNeeded, nDim, nodesPerElem, numScsIp, numScvIp, numFemIp);
 }
 
@@ -455,6 +465,42 @@ void ScratchViews<T>::create_needed_field_views(const TeamHandleType& team,
   // Track total bytes required for field allocations
   num_bytes_required += numScalars * sizeof(T);
 }
+
+template<typename T>
+void ScratchViews<T>::create_needed_field_views_tensor(const TeamHandleType& team,
+                               const ElemDataRequests& dataNeeded,
+                               const stk::mesh::BulkData& bulkData,
+                               int order)
+{
+  int numScalars = 0;
+  const stk::mesh::MetaData& meta = bulkData.mesh_meta_data();
+  unsigned numFields = meta.get_fields().size();
+  fieldViews.resize(numFields, nullptr);
+
+  const FieldSet& neededFields = dataNeeded.get_fields();
+  for(const FieldInfo& fieldInfo : neededFields) {
+    stk::mesh::EntityRank fieldEntityRank = fieldInfo.field->entity_rank();
+    ThrowAssertMsg(fieldEntityRank == stk::topology::NODE_RANK || fieldEntityRank == stk::topology::ELEM_RANK, "Currently only node and element fields are supported.");
+    unsigned scalarsDim1 = fieldInfo.scalarsDim1;
+
+    ThrowRequire(fieldEntityRank == stk::topology::NODE_RANK);
+
+    // only 2d for now
+    if (scalarsDim1 == 1u) {
+      fieldViews[fieldInfo.field->mesh_meta_data_ordinal()] = new ViewT<SharedMemView<T**>>(get_shmem_view_2D<T>(team, order+1, order+1), 2);
+      numScalars += (order+1)*(order+1);
+    }
+
+
+    if (scalarsDim1 == 2u) {
+      fieldViews[fieldInfo.field->mesh_meta_data_ordinal()] = new ViewT<SharedMemView<T***>>(get_shmem_view_3D<T>(team, 2, order+1, order+1), 3);
+      numScalars += (order+1)*(order+1)*2;
+    }
+  }
+  // Track total bytes required for field allocations
+  num_bytes_required += numScalars * sizeof(T);
+}
+
 
 template<typename T>
 void ScratchViews<T>::create_needed_master_element_views(const TeamHandleType& team,
