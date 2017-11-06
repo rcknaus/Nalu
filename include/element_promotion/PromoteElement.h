@@ -139,18 +139,6 @@ namespace internal {
     const ConnectivityMap& faceConnectivity,
     const ConnectivityMap& volumeConnectivity);
 
-  void set_coordinates_quad(
-    const stk::mesh::BulkData& bulk,
-    const ElementDescription& desc,
-    const stk::mesh::PartVector& partsToBePromoted,
-    const VectorFieldType& coordField);
-
-  void set_coordinates_hex(
-    const stk::mesh::BulkData& bulk,
-    const ElementDescription& desc,
-    const stk::mesh::PartVector& partsToBePromoted,
-    const VectorFieldType& coordField);
-
   void perform_parallel_consolidation_of_node_ids(
     const stk::mesh::BulkData& bulk,
     ConnectivityMap& connectivityMap);

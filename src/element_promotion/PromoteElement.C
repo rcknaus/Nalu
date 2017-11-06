@@ -8,6 +8,7 @@
 #include <element_promotion/PromoteElement.h>
 #include <element_promotion/PromotedPartHelper.h>
 #include <element_promotion/ElementDescription.h>
+#include <element_promotion/PromotedElementFieldInterp.h>
 #include <master_element/Hex8CVFEM.h>
 #include <master_element/MasterElement.h>
 #include <master_element/Quad42DCVFEM.h>  
@@ -62,7 +63,7 @@ promote_elements(
     ThrowRequire(edgePart != nullptr);
     return internal::promote_elements_quad(bulk, desc, coordField, partsToBePromoted, *edgePart);
   }
-  ThrowRequire(facePart != nullptr);
+  ThrowRequire(edgePart != nullptr && facePart != nullptr);
   return internal::promote_elements_hex(bulk, desc, coordField, partsToBePromoted, *edgePart, *facePart);
 }
 
@@ -126,7 +127,7 @@ promote_elements_quad(
 
   stk::mesh::PartVector promotedSideParts = create_boundary_elements(bulk, desc, partsToBePromoted);
 
-  set_coordinates_quad(bulk, desc, promotedElemParts, coordField);
+  interpolate_field_to_new_nodes(bulk, desc, promotedElemParts, coordField);
 
   return std::make_pair(promotedElemParts, promotedSideParts);
 }
@@ -194,7 +195,7 @@ promote_elements_hex(
 
   stk::mesh::PartVector promotedSideParts = create_boundary_elements(bulk, desc, partsToBePromoted);
 
-  set_coordinates_hex(bulk, desc, promotedElemParts, coordField);
+  interpolate_field_to_new_nodes(bulk, desc, promotedElemParts, coordField);
 
   return std::make_pair(promotedElemParts, promotedSideParts);
 }
@@ -575,7 +576,7 @@ add_face_nodes_to_elem_connectivity(
   stk::mesh::EntityIdVector& allNodes)
 {
   const auto* face_rels = bulk.begin_faces(elem);
-  const auto* face_ords = bulk.begin_edge_ordinals(elem);
+  const auto* face_ords = bulk.begin_face_ordinals(elem);
   const auto* face_perm = bulk.begin_face_permutations(elem);
   int newNodesPerEdge = desc.newNodesPerEdge;
   for (unsigned face_index = 0; face_index < bulk.num_faces(elem); ++face_index) {
@@ -653,89 +654,6 @@ destroy_entities(
       ThrowRequireMsg(destroyed, "Failed to destroy entity: " + std::to_string(bulk.identifier(entity)));
     }
   }
-}
-//--------------------------------------------------------------------------
-void
-set_coordinates_quad(
-  const stk::mesh::BulkData& bulk,
-  const ElementDescription& desc,
-  const stk::mesh::PartVector& promotedPartVector,
-  const VectorFieldType& coordField)
-{
-  Quad42DSCS meQuad;
-  auto selector = stk::mesh::selectUnion(promotedPartVector);
-  const auto& elem_buckets = bulk.get_buckets(stk::topology::ELEM_RANK, selector);
-
-  int baseNodes = desc.nodesInBaseElement;
-  std::vector<double> baseCoords(baseNodes*desc.dimension);
-  std::vector<double> physCoords(desc.dimension);
-
-  bucket_loop(elem_buckets, [&](const stk::mesh::Entity elem) {
-    ThrowAssert(desc.nodesPerElement == static_cast<int>(bulk.num_nodes(elem)));
-    const stk::mesh::Entity* node_rels = bulk.begin_nodes(elem);
-
-    for (int ord : desc.baseNodeOrdinals) {
-      double* coords = stk::mesh::field_data(coordField, node_rels[ord]);
-      for (int d = 0; d < desc.dimension; ++d) {
-        baseCoords[d * 4 + ord] = coords[d];
-      }
-    }
-
-    for (int ord : desc.promotedNodeOrdinals) {
-      const auto& isoParCoords = desc.nodeLocs.at(ord);
-      meQuad.interpolatePoint(desc.dimension, isoParCoords.data(), baseCoords.data(), physCoords.data());
-      double* coords = stk::mesh::field_data(coordField, node_rels[ord]);
-      for (int d = 0; d < desc.dimension; ++d) {
-        coords[d] = physCoords[d];
-      }
-    }
-  });
-}
-//--------------------------------------------------------------------------
-void
-set_coordinates_hex(
-  const stk::mesh::BulkData& bulk,
-  const ElementDescription& desc,
-  const stk::mesh::PartVector& promotedPartVector,
-  const VectorFieldType& coordField)
-{
-  HexSCS meHex;
-  auto selector = stk::mesh::selectUnion(promotedPartVector);
-  const auto& elem_buckets = bulk.get_buckets(stk::topology::ELEM_RANK,
-    selector);
-
-  int baseNodes = desc.nodesInBaseElement;
-  std::vector<double> baseCoords(baseNodes * desc.dimension);
-  std::vector<double> physCoords(desc.dimension);
-
-  bucket_loop(elem_buckets,  [&](const stk::mesh::Entity elem) {
-    ThrowAssert(desc.nodesPerElement == static_cast<int>(bulk.num_nodes(elem)));
-    const stk::mesh::Entity* node_rels = bulk.begin_nodes(elem);
-
-    int baseIndex = 0;
-    for (int ord : desc.baseNodeOrdinals) {
-      double* coords = stk::mesh::field_data(coordField, node_rels[ord]);
-      for (int d = 0; d < desc.dimension; ++d) {
-        baseCoords[d * 8 + baseIndex] = coords[d];
-      }
-      ++baseIndex;
-    }
-
-    for (int ord : desc.promotedNodeOrdinals) {
-      auto isoParCoords = desc.nodeLocs.at(ord);
-      meHex.interpolatePoint(
-        desc.dimension,
-        isoParCoords.data(),
-        baseCoords.data(),
-        physCoords.data()
-      );
-      double* coords = stk::mesh::field_data(coordField, node_rels[ord]);
-
-      for (int d = 0; d < desc.dimension; ++d) {
-        coords[d] = physCoords[d];
-      }
-    }
-  });
 }
 //--------------------------------------------------------------------------
 NodesElemMap
