@@ -552,6 +552,11 @@ public:
   void shifted_shape_fcn(
     double *shpfc);
 
+  double isInElement(
+    const double *elemNodalCoord,
+    const double *pointCoord,
+    double *isoParCoord);
+
   void interpolatePoint(
     const int &nComp,
     const double *isoParCoord,
@@ -559,11 +564,17 @@ public:
     double *result);
 
 private:
+  double length_estimate(const double * coords) const;
+  double quadratic_value(const double* coeffs, double s) const;
+  double quadratic_deriv(const double* coeffs, double s) const;
+
+
   void area_vector(
     const double *POINTER_RESTRICT coords,
     const double s,
     double *POINTER_RESTRICT areaVector) const;
 
+  const double elemThickness_;
   std::vector<double> ipWeight_;
 };
 

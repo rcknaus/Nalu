@@ -1506,7 +1506,8 @@ Edge2DSCS::general_normal(
 //-------- constructor -----------------------------------------------------
 //--------------------------------------------------------------------------
 Edge32DSCS::Edge32DSCS()
-  : QuadrilateralP2Element()
+  : QuadrilateralP2Element(),
+    elemThickness_(0.01)
 {
   nodesPerElement_ = nodes1D_;
 
@@ -1610,6 +1611,82 @@ Edge32DSCS::shifted_shape_fcn(double *shpfc)
     shpfc[j+1] = s*(1.0+s)*0.5;
     shpfc[j+2] = (1.0-s)*(1.0+s);
   }
+}
+
+
+double Edge32DSCS::length_estimate(const double* coords) const
+{
+  // estimate the length of the curve by splitting it into
+  // two linear pieces
+
+  double lx1 = coords[1] - coords[2];
+  double ly1 = coords[4] - coords[5];
+
+  double lx2 = coords[0] - coords[2];
+  double ly2 = coords[3] - coords[5];
+
+  double len_est = std::sqrt(lx1 * lx1 + ly1 * ly1) + std::sqrt(lx2 * lx2 + ly2 * ly2);
+  return len_est;
+}
+
+double Edge32DSCS::quadratic_value(const double* coeffs, double s) const
+{
+  return coeffs[0] + s * (coeffs[1] + s * coeffs[2]);
+}
+
+double Edge32DSCS::quadratic_deriv(const double* coeffs, double s) const
+{
+  return coeffs[1] + 2 * coeffs[2] * s;
+}
+
+double
+Edge32DSCS::isInElement(
+    const double * elem_nodal_coor,     // (2,2)
+    const double * point_coor,          // (2)
+    double * par_coor )
+{
+  const double coeffx[3] = {
+      elem_nodal_coor[2],
+      0.5 * (elem_nodal_coor[1] - elem_nodal_coor[0]),
+      0.5 * (elem_nodal_coor[1] - 2 * elem_nodal_coor[2] + elem_nodal_coor[0])
+  };
+
+  const double coeffy[3] = {
+      elem_nodal_coor[5],
+      0.5 * (elem_nodal_coor[4] - elem_nodal_coor[3]),
+      0.5 * (elem_nodal_coor[4] - 2 * elem_nodal_coor[5] + elem_nodal_coor[3])
+  };
+
+  // control info
+  double sguess = 0;
+  int maxIter = 100;
+  double tol = 1.0e-8; // tolerance on s directly
+
+  double deltas = 0;
+  int iter = 0;
+  do  {
+    const double distx = point_coor[0] - quadratic_value(coeffx, sguess);
+    const double dxs = quadratic_deriv(coeffx, sguess);
+
+    const double disty = point_coor[1] - quadratic_value(coeffy, sguess);
+    const double dys = quadratic_deriv(coeffy, sguess);
+
+    deltas = 0.5 * (distx * distx + disty * disty) / ( distx * dxs + disty * dys );
+    sguess += deltas;
+  } while(std::fabs(deltas) > tol && ++iter < maxIter);
+
+  // update distance
+  const double distx = point_coor[0] - quadratic_value(coeffx, sguess);
+  const double disty = point_coor[1] - quadratic_value(coeffy, sguess);
+  const double distsq = distx * distx + disty * disty;
+
+  par_coor[0] = sguess;
+  par_coor[1] = std::sqrt(distsq) / length_estimate(elem_nodal_coor);
+  double dist = std::fabs(sguess);
+  if (elemThickness_ < par_coor[1] && dist < 1.0 + par_coor[1]) {
+    dist = 1 + par_coor[1];
+  }
+  return dist;
 }
 
 //--------------------------------------------------------------------------

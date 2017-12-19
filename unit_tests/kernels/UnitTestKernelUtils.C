@@ -882,15 +882,95 @@ void calc_projected_nodal_gradient_boundary(
   });
 }
 
-void calc_dual_nodal_volume(
+void calc_nodal_divergence(
   const stk::mesh::BulkData& bulk,
   const stk::topology& topo,
   const VectorFieldType& coordinates,
-  const ScalarFieldType& dnvField)
+  const ScalarFieldType& dnv,
+  const VectorFieldType& vectorField,
+  const GenericFieldType& gradField)
 {
   const auto& meta = bulk.mesh_meta_data();
   const int ndim = meta.spatial_dimension();
   EXPECT_EQ(ndim, 3);
+
+  sierra::nalu::ElemDataRequests dataNeeded;
+
+  auto meSCS = sierra::nalu::MasterElementRepo::get_surface_master_element(topo);
+
+  dataNeeded.add_cvfem_surface_me(meSCS);
+  dataNeeded.add_coordinates_field(coordinates, ndim, sierra::nalu::CURRENT_COORDINATES);
+  dataNeeded.add_gathered_nodal_field(vectorField, ndim);
+  dataNeeded.add_gathered_nodal_field(dnv, 1);
+  dataNeeded.add_gathered_nodal_field(gradField, ndim);
+  dataNeeded.add_master_element_call(sierra::nalu::SCS_AREAV, sierra::nalu::CURRENT_COORDINATES);
+
+  const stk::mesh::Selector selector = meta.locally_owned_part() | meta.globally_shared_part();
+  const auto& buckets = bulk.get_buckets(stk::topology::ELEM_RANK, selector);
+
+  const int bytes_per_team = 0;
+  const int bytes_per_thread = sierra::nalu::get_num_bytes_pre_req_data(dataNeeded, meta.spatial_dimension()) ;
+
+  auto v_shape_function = Kokkos::View<double**>("shape_function", meSCS->numIntPoints_, meSCS->nodesPerElement_);
+
+  auto team_exec = sierra::nalu::get_team_policy(buckets.size(), bytes_per_team, bytes_per_thread);
+
+  Kokkos::parallel_for(team_exec, [&](const sierra::nalu::TeamHandleType& team) {
+    auto& b = *buckets[team.league_rank()];
+    const auto length = b.size();
+
+    EXPECT_EQ(b.topology(), topo);
+
+    sierra::nalu::ScratchViews<double> preReqData(
+      team, bulk, topo, dataNeeded);
+
+    Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, length), [&](const size_t& k) {
+      stk::mesh::Entity element = b[k];
+      sierra::nalu::fill_pre_req_data(
+        dataNeeded, bulk, topo, element, preReqData);
+
+      meSCS->shape_fcn(v_shape_function.data());
+      auto v_dnv = preReqData.get_scratch_view_1D(dnv);
+      auto v_vector = preReqData.get_scratch_view_2D(vectorField);
+      auto v_scs_areav = preReqData.get_me_views(sierra::nalu::CURRENT_COORDINATES).scs_areav;
+      const stk::mesh::Entity* node_rels = preReqData.elemNodes;
+      const int* lrscv = meSCS->adjacentNodes();
+
+      for (int di = 0; di < ndim; ++di) {
+        for (int ip = 0; ip < meSCS->numIntPoints_; ++ip) {
+          double qIp = 0.0;
+          for (int n = 0; n < meSCS->nodesPerElement_; ++n) {
+            qIp += v_shape_function(ip, n) * v_vector(n,di);
+          }
+
+          int il = lrscv[2*ip + 0];
+          int ir = lrscv[2*ip + 1];
+          double* dqdxL = stk::mesh::field_data(gradField, node_rels[il]);
+          double* dqdxR = stk::mesh::field_data(gradField, node_rels[ir]);
+
+          for (int d = 0; d < ndim; ++d) {
+            double fac = qIp * v_scs_areav(ip, d);
+            double valL = fac / v_dnv(il);
+            double valR = fac / v_dnv(ir);
+            Kokkos::atomic_add(dqdxL + di*ndim + d, +valL);
+            Kokkos::atomic_add(dqdxR + di*ndim + d, -valR);
+          }
+        }
+      }
+    });
+  });
+}
+
+
+void calc_dual_nodal_volume(
+  const stk::mesh::BulkData& bulk,
+  const stk::topology& topo,
+  const VectorFieldType& coordinates,
+  ScalarFieldType& dnvField)
+{
+  const auto& meta = bulk.mesh_meta_data();
+  const int ndim = meta.spatial_dimension();
 
   sierra::nalu::ElemDataRequests dataNeeded;
 
@@ -934,6 +1014,9 @@ void calc_dual_nodal_volume(
       }
     });
   });
+  if (bulk.parallel_size() > 1) {
+    stk::mesh::parallel_sum(bulk, {&dnvField});
+  }
 }
 
 void calc_projected_nodal_gradient(
@@ -950,10 +1033,6 @@ void calc_projected_nodal_gradient(
   stk::mesh::field_fill(0.0, gradField);
 
   calc_dual_nodal_volume(bulk, topo, coordinates, dnv);
-  if (bulk.parallel_size() > 1) {
-    stk::mesh::parallel_sum(bulk, {&dnv});
-  }
-
   calc_projected_nodal_gradient_interior(bulk, topo, coordinates, dnv, scalarField, gradField);
   calc_projected_nodal_gradient_boundary(bulk, topo.side_topology(0), coordinates, dnv, scalarField, gradField);
   if (bulk.parallel_size() > 1) {

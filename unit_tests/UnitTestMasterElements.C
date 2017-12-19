@@ -197,7 +197,6 @@ void check_volume_integration(
   auto QR = unit_test_utils::random_linear_transformation(dim, 1.0, rng);
   for (int j = 0; j < meSV.nodesPerElement_; ++j) {
     const double* coords = stk::mesh::field_data(coordField, node_rels[j]);
-
     if (dim == 3) {
       sierra::nalu::matvec33(QR.data(), coords, &ws_coords_mapped[j*dim]);
     }
@@ -500,33 +499,6 @@ protected:
     sierra::nalu::MasterElement* meSS;
     sierra::nalu::MasterElement* meSV;
 };
-
-#define TEST_F_ALL_TOPOS_NO_PYR(x, y) \
-    TEST_F(x, tri##_##y)   { y(stk::topology::TRI_3_2D); }   \
-    TEST_F(x, quad4##_##y)  { y(stk::topology::QUAD_4_2D); } \
-    TEST_F(x, quad9##_##y)  { y(stk::topology::QUAD_9_2D); } \
-    TEST_F(x, tet##_##y)   { y(stk::topology::TET_4); }      \
-    TEST_F(x, wedge##_##y) { y(stk::topology::WEDGE_6); }    \
-    TEST_F(x, hex8##_##y)   { y(stk::topology::HEX_8); }     \
-    TEST_F(x, hex27##_##y)  { y(stk::topology::HEX_27); }
-
-#define TEST_F_ALL_TOPOS(x, y) \
-    TEST_F(x, tri##_##y)   { y(stk::topology::TRI_3_2D); }   \
-    TEST_F(x, quad4##_##y)  { y(stk::topology::QUAD_4_2D); } \
-    TEST_F(x, quad9##_##y)  { y(stk::topology::QUAD_9_2D); } \
-    TEST_F(x, tet##_##y)   { y(stk::topology::TET_4); }      \
-    TEST_F(x, pyr##_##y) { y(stk::topology::PYRAMID_5); }    \
-    TEST_F(x, wedge##_##y) { y(stk::topology::WEDGE_6); }    \
-    TEST_F(x, hex8##_##y)   { y(stk::topology::HEX_8); }     \
-    TEST_F(x, hex27##_##y)  { y(stk::topology::HEX_27); }
-
-#define TEST_F_ALL_P1_TOPOS(x, y) \
-    TEST_F(x, tri##_##y)   { y(stk::topology::TRI_3_2D); }   \
-    TEST_F(x, quad4##_##y)  { y(stk::topology::QUAD_4_2D); } \
-    TEST_F(x, tet##_##y)   { y(stk::topology::TET_4); }      \
-    TEST_F(x, wedge##_##y) { y(stk::topology::WEDGE_6); }    \
-    TEST_F(x, pyr##_##y) { y(stk::topology::PYRAMID_5); }    \
-    TEST_F(x, hex8##_##y)   { y(stk::topology::HEX_8); }
 
 // Patch tests: pyramids fail
 TEST_F_ALL_TOPOS_NO_PYR(MasterElement, scs_interpolation);

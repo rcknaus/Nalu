@@ -145,6 +145,12 @@ void calc_projected_nodal_gradient(
   const VectorFieldType& vectorField,
   GenericFieldType& tensorField);
 
+void calc_dual_nodal_volume(
+  const stk::mesh::BulkData& bulk,
+  const stk::topology& topo,
+  const VectorFieldType& coordinates,
+  ScalarFieldType& dnvField);
+
 void expect_all_near(
   const Kokkos::View<double*>& calcValue,
   const double* exactValue,

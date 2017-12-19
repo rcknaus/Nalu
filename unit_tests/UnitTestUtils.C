@@ -193,7 +193,9 @@ stk::mesh::Entity create_one_element(
      bulk.declare_entity(stk::topology::NODE_RANK, id, {});
    }
    auto elem = stk::mesh::declare_element(bulk, block_1, bulk.parallel_rank()+1, nodeIds);
-   stk::mesh::create_all_sides(bulk, block_1, allSurfaces, false);
+//   stk::mesh::create_all_sides(bulk, block_1, allSurfaces, false);
+
+   stk::mesh::create_exposed_block_boundary_sides(bulk, block_1, allSurfaces);
 
    bulk.modification_end();
 
@@ -609,6 +611,7 @@ std::array<double,9> random_rotation_matrix(int dim, std::mt19937& rng)
   }
   return rot;
 }
+
 
 std::array<double,9> random_linear_transformation(int dim, double scale, std::mt19937& rng)
 {
