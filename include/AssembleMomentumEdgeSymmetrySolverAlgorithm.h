@@ -36,6 +36,7 @@ public:
   GenericFieldType *dudx_;
   VectorFieldType *coordinates_;
   ScalarFieldType *viscosity_;
+  ScalarFieldType *pressure_;
   GenericFieldType *exposedAreaVec_;
 };
 

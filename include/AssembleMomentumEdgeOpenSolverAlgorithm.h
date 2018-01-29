@@ -39,6 +39,7 @@ public:
   GenericFieldType *exposedAreaVec_;
   GenericFieldType *openMassFlowRate_;
   VectorFieldType *velocityBc_;
+  ScalarFieldType *pressure_;
 };
 
 } // namespace nalu

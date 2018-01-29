@@ -91,9 +91,7 @@ AssembleContinuityEdgeOpenSolverAlgorithm::execute()
   const double mdotCorrection = realm_.solutionOptions_->activateOpenMdotCorrection_ 
     ? realm_.solutionOptions_->mdotAlgOpenCorrection_
     : 0.0;
-  const double pstabFac = realm_.solutionOptions_->activateOpenMdotCorrection_ 
-    ? 0.0
-    : 1.0;
+  const double pstabFac = 1.0;
     
   // lhs/rhs space
   std::vector<double> lhs;

@@ -46,6 +46,7 @@ public:
   ScalarFieldType *viscosity_;
   VectorFieldType *edgeAreaVec_;
   ScalarFieldType *massFlowRate_;
+  ScalarFieldType *pressure_;
 
   // peclet function specifics
   PecletFunction * pecletFunction_;

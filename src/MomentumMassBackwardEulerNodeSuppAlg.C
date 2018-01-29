@@ -84,7 +84,7 @@ MomentumMassBackwardEulerNodeSuppAlg::node_execute(
   const double lhsfac = rhoNp1*dualVolume/dt_;
   const int nDim = nDim_;
   for ( int i = 0; i < nDim; ++i ) {
-    rhs[i] += -(rhoNp1*uNp1[i] - rhoN*uN[i])*dualVolume/dt_ -dpdx[i]*dualVolume;
+    rhs[i] += -(rhoNp1*uNp1[i] - rhoN*uN[i])*dualVolume/dt_;
     const int row = i*nDim;
     lhs[row+i] += lhsfac;
   }

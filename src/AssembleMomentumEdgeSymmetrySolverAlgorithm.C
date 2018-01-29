@@ -47,6 +47,7 @@ AssembleMomentumEdgeSymmetrySolverAlgorithm::AssembleMomentumEdgeSymmetrySolverA
   velocity_ = meta_data.get_field<VectorFieldType>(stk::topology::NODE_RANK, "velocity");
   dudx_ = meta_data.get_field<GenericFieldType>(stk::topology::NODE_RANK, "dudx");
   coordinates_ = meta_data.get_field<VectorFieldType>(stk::topology::NODE_RANK, realm_.get_coordinates_name());
+  pressure_ = meta_data.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "pressure");
   // extract viscosity  name
   const std::string viscName = realm_.is_turbulent()
     ? "effective_viscosity_u" : "viscosity";
@@ -186,6 +187,7 @@ AssembleMomentumEdgeSymmetrySolverAlgorithm::execute()
 
         // a few only required (or even defined) on nodeR
         const double * dudxR = stk::mesh::field_data(*dudx_, nodeR);
+        const double  pressureR = *stk::mesh::field_data(*pressure_, nodeR);
 
         // offset for bip area vector
         const int faceOffSet = ip*nDim;
@@ -267,13 +269,12 @@ AssembleMomentumEdgeSymmetrySolverAlgorithm::execute()
 
           // apply normal component
           const double diffFlux = fxnx*nx[i];
-
-          p_rhs[indexR] -= diffFlux;
+          const double axi = areaVec[faceOffSet+i];
+          p_rhs[indexR] -= diffFlux + pressureR * axi;
           double lhsFac = -viscBip*asq*inv_axdx*nx[i]*nx[i];
           p_lhs[rRiL_i] -= lhsFac;
           p_lhs[rRiR_i] += lhsFac;
 
-          const double axi = areaVec[faceOffSet+i];
           const double nxnx = nx[i]*nx[i];
 
           for ( int j = 0; j < nDim; ++j ) {

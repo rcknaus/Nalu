@@ -88,9 +88,7 @@ ComputeMdotEdgeOpenAlgorithm::execute()
     = (realm_.get_noc_usage(dofName) == true) ? 1.0 : 0.0;
 
   // extract global algorithm options, if active
-  const double pstabFac = realm_.solutionOptions_->activateOpenMdotCorrection_ 
-    ? 0.0
-    : 1.0;
+  const double pstabFac = 1.0;
 
   // time step; scale projection time scale by pstabFac (no divide by here)
   const double dt = realm_.get_time_step();

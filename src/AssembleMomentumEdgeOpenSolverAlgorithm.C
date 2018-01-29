@@ -84,6 +84,8 @@ AssembleMomentumEdgeOpenSolverAlgorithm::execute()
 
   const int nDim = meta_data.spatial_dimension();
 
+  const bool doVisc = false;
+
   // nearest face entrainment
   const double nfEntrain = realm_.solutionOptions_->nearestFaceEntrain_;
   const double om_nfEntrain = 1.0-nfEntrain;
@@ -278,58 +280,60 @@ AssembleMomentumEdgeOpenSolverAlgorithm::execute()
         }
 
         // full stress, sigma_ij
-        for (int i = 0; i < nDim; ++i ) {
+        if (doVisc) {
+          for (int i = 0; i < nDim; ++i ) {
 
-          // setup for matrix contribution assembly
-          const int indexL = opposingNode*nDim + i;
-          const int indexR = nearestNode*nDim + i;
-          const int rowR = indexR*nodesPerElement*nDim;
+            // setup for matrix contribution assembly
+            const int indexL = opposingNode*nDim + i;
+            const int indexR = nearestNode*nDim + i;
+            const int rowR = indexR*nodesPerElement*nDim;
 
-          const int rRiL_i = rowR+indexL;
-          const int rRiR_i = rowR+indexR;
+            const int rRiL_i = rowR+indexL;
+            const int rRiR_i = rowR+indexR;
 
-          // subtract normal component
-          const double diffFlux = p_fx[i] - p_nx[i]*fxnx;
+            // subtract normal component
+            const double diffFlux = p_fx[i] - p_nx[i]*fxnx;
 
-          const double om_nxinxi = 1.0-p_nx[i]*p_nx[i];
+            const double om_nxinxi = 1.0-p_nx[i]*p_nx[i];
 
-          p_rhs[indexR] -= diffFlux;
-          double lhsFac = -viscBip*asq*inv_axdx*om_nxinxi;
-          p_lhs[rRiL_i] -= lhsFac;
-          p_lhs[rRiR_i] += lhsFac;
+            p_rhs[indexR] -= diffFlux;
+            double lhsFac = -viscBip*asq*inv_axdx*om_nxinxi;
+            p_lhs[rRiL_i] -= lhsFac;
+            p_lhs[rRiR_i] += lhsFac;
 
-          const double axi = areaVec[faceOffSet+i];
+            const double axi = areaVec[faceOffSet+i];
 
-          for ( int j = 0; j < nDim; ++j ) {
-            const double axj = areaVec[faceOffSet+j];
-            lhsFac = -viscBip*axi*axj*inv_axdx*om_nxinxi;
+            for ( int j = 0; j < nDim; ++j ) {
+              const double axj = areaVec[faceOffSet+j];
+              lhsFac = -viscBip*axi*axj*inv_axdx*om_nxinxi;
 
-            const int colL = opposingNode*nDim + j;
-            const int colR = nearestNode*nDim + j;
+              const int colL = opposingNode*nDim + j;
+              const int colR = nearestNode*nDim + j;
 
-            const int rRiL_j = rowR+colL;
-            const int rRiR_j = rowR+colR;
+              const int rRiL_j = rowR+colL;
+              const int rRiR_j = rowR+colR;
 
-            p_lhs[rRiL_j] -= lhsFac;
-            p_lhs[rRiR_j] += lhsFac;
-
-            if ( i == j ) {
-              // nothing
-            }
-            else {
-	      const double nxinxj = p_nx[i]*p_nx[j];
-
-              lhsFac = viscBip*asq*inv_axdx*nxinxj;
               p_lhs[rRiL_j] -= lhsFac;
               p_lhs[rRiR_j] += lhsFac;
 
-              lhsFac = viscBip*axj*axj*inv_axdx*nxinxj;
-              p_lhs[rRiL_j] -= lhsFac;
-              p_lhs[rRiR_j] += lhsFac;
+              if ( i == j ) {
+                // nothing
+              }
+              else {
+                const double nxinxj = p_nx[i]*p_nx[j];
 
-              lhsFac = viscBip*axj*axi*inv_axdx*nxinxj;
-              p_lhs[rRiL_i] -= lhsFac;
-              p_lhs[rRiR_i] += lhsFac;
+                lhsFac = viscBip*asq*inv_axdx*nxinxj;
+                p_lhs[rRiL_j] -= lhsFac;
+                p_lhs[rRiR_j] += lhsFac;
+
+                lhsFac = viscBip*axj*axj*inv_axdx*nxinxj;
+                p_lhs[rRiL_j] -= lhsFac;
+                p_lhs[rRiR_j] += lhsFac;
+
+                lhsFac = viscBip*axj*axi*inv_axdx*nxinxj;
+                p_lhs[rRiL_i] -= lhsFac;
+                p_lhs[rRiR_i] += lhsFac;
+              }
             }
           }
         }

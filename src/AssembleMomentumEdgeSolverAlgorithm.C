@@ -65,6 +65,7 @@ AssembleMomentumEdgeSolverAlgorithm::AssembleMomentumEdgeSolverAlgorithm(
   viscosity_ = meta_data.get_field<ScalarFieldType>(stk::topology::NODE_RANK, viscName);
   edgeAreaVec_ = meta_data.get_field<VectorFieldType>(stk::topology::EDGE_RANK, "edge_area_vector");
   massFlowRate_ = meta_data.get_field<ScalarFieldType>(stk::topology::EDGE_RANK, "mass_flow_rate");
+  pressure_ = meta_data.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "pressure");
 
   // create the peclet blending function
   pecletFunction_ = eqSystem->create_peclet_function(velocity_->name());
@@ -217,6 +218,9 @@ AssembleMomentumEdgeSolverAlgorithm::execute()
       const double viscosityL = *stk::mesh::field_data(*viscosity_, nodeL);
       const double viscosityR = *stk::mesh::field_data(*viscosity_, nodeR);
 
+      const double pressureL = *stk::mesh::field_data(*pressure_, nodeL);
+      const double pressureR = *stk::mesh::field_data(*pressure_, nodeR);
+
       // copy in extrapolated values
       for ( int i = 0; i < nDim; ++i ) {
         // extrapolated du
@@ -318,8 +322,8 @@ AssembleMomentumEdgeSolverAlgorithm::execute()
         const double uiHatR = alpha*p_uIpR[i] + om_alpha*uiIp;
         const double uiCds = 0.5*(uiHatL + uiHatR);
 
-        // total advection; pressure contribution in time term expression
-        const double aflux = tmdot*(pecfac*uiUpwind + om_pecfac*uiCds);
+        // total advection
+        const double aflux = tmdot*(pecfac*uiUpwind + om_pecfac*uiCds) + 0.5 * (pressureL + pressureR) * p_areaVec[i];
 
         // divU
         double divU = 0.0;
@@ -407,9 +411,8 @@ AssembleMomentumEdgeSolverAlgorithm::execute()
         }
 
       }
-      
-      apply_coeff(connected_nodes, scratchIds, scratchVals, rhs, lhs, __FILE__);
 
+      apply_coeff(connected_nodes, scratchIds, scratchVals, rhs, lhs, __FILE__);
     }
   }
 }
