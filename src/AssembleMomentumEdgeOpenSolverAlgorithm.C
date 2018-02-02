@@ -86,6 +86,9 @@ AssembleMomentumEdgeOpenSolverAlgorithm::execute()
 
   const bool doVisc = false;
 
+  // 0 < lambda < 1
+  const double lambda = 1.0;
+
   // nearest face entrainment
   const double nfEntrain = realm_.solutionOptions_->nearestFaceEntrain_;
   const double om_nfEntrain = 1.0-nfEntrain;
@@ -360,18 +363,23 @@ AssembleMomentumEdgeOpenSolverAlgorithm::execute()
             const int indexR = nearestNode*nDim + i;
             const int rowR = indexR*nodesPerElement*nDim;
 
-            // constrain to be normal
-            p_rhs[indexR] -= tmdot*(nfEntrain*uxnx + om_nfEntrain*uxnxip)*p_nx[i];
+            // constrain to be normal, specified tangential
+            const double uspect = bcVelocity[i]-uspecxnx*p_nx[i];
+            const double utang = uNp1R[i] - uxnx*p_nx[i];
 
-            // user spec entrainment (tangential)
-            p_rhs[indexR] -= tmdot*(bcVelocity[i]-uspecxnx*p_nx[i]);
+            // set advective flux: normal component of velocity dof + specificed tangential
+            const double vel_proj = (nfEntrain*uxnx + om_nfEntrain*uxnxip)*p_nx[i] + uspect;
+            p_rhs[indexR] -= tmdot * vel_proj;
+
+            // add a penalty to the specified tangential component
+            p_rhs[indexR] -= lambda * tmdot* (uspect - utang);
 
             for ( int j = 0; j < nDim; ++j ) {
 
               const int colL = opposingNode*nDim + j;
               const int colR = nearestNode*nDim + j;
 
-              p_lhs[rowR+colR] +=  tmdot*(nfEntrain + om_nfEntrain*0.5)*p_nx[i]*p_nx[j];
+              p_lhs[rowR+colR] +=  tmdot*(nfEntrain + om_nfEntrain*0.5)*p_nx[i]*p_nx[j] - lambda * tmdot  * (1 - p_nx[i]*p_nx[j]);
               p_lhs[rowR+colL] +=  tmdot*om_nfEntrain*0.5*p_nx[i]*p_nx[j];
 
             }
