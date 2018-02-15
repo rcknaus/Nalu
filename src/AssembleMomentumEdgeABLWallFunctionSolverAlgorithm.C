@@ -67,6 +67,7 @@ AssembleMomentumEdgeABLWallFunctionSolverAlgorithm::AssembleMomentumEdgeABLWallF
   exposedAreaVec_ = meta_data.get_field<GenericFieldType>(meta_data.side_rank(), "exposed_area_vector");
   wallFrictionVelocityBip_ = meta_data.get_field<GenericFieldType>(meta_data.side_rank(), "wall_friction_velocity_bip");
   wallNormalDistanceBip_ = meta_data.get_field<GenericFieldType>(meta_data.side_rank(), "wall_normal_distance_bip");
+  pressure_ = meta_data.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "pressure");
 }
 
 //--------------------------------------------------------------------------
@@ -191,6 +192,7 @@ AssembleMomentumEdgeABLWallFunctionSolverAlgorithm::execute()
         double heatFluxBip = *stk::mesh::field_data(*bcHeatFlux_, nodeR);
         double rhoBip =  *stk::mesh::field_data(*density_, nodeR);
         double CpBip =  *stk::mesh::field_data(*specificHeat_, nodeR);
+        double pressureR =  *stk::mesh::field_data(*pressure_, nodeR);
 
         for ( int j = 0; j < nDim; ++j ) {
           const double *uNp1 = stk::mesh::field_data(velocityNp1, nodeR);
@@ -267,7 +269,7 @@ AssembleMomentumEdgeABLWallFunctionSolverAlgorithm::execute()
               p_lhs[rowR+localFaceNode*nDim+j] -= lambda*ninj;
             }
           }
-          p_rhs[indexR] -= lambda*(uiTan-uiBcTan);
+          p_rhs[indexR] -= lambda*(uiTan-uiBcTan) -  + pressureR * areaVec[offSetAveraVec+i];
         }
       }
       

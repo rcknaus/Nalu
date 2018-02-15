@@ -56,6 +56,7 @@ public:
   GenericFieldType *exposedAreaVec_;
   GenericFieldType *wallFrictionVelocityBip_;
   GenericFieldType *wallNormalDistanceBip_;
+  ScalarFieldType *pressure_;
 };
 
 } // namespace nalu
