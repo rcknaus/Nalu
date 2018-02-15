@@ -269,7 +269,7 @@ AssembleMomentumEdgeABLWallFunctionSolverAlgorithm::execute()
               p_lhs[rowR+localFaceNode*nDim+j] -= lambda*ninj;
             }
           }
-          p_rhs[indexR] -= lambda*(uiTan-uiBcTan) -  + pressureR * areaVec[offSetAveraVec+i];
+          p_rhs[indexR] -= lambda*(uiTan-uiBcTan) + pressureR * areaVec[offSetAveraVec+i];
         }
       }
       
