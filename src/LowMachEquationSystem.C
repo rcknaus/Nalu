@@ -31,6 +31,7 @@
 #include <AssembleNodalGradEdgeAlgorithm.h>
 #include <AssembleNodalGradElemAlgorithm.h>
 #include <AssembleNodalGradBoundaryAlgorithm.h>
+#include <AssembleNodalGradPBoundaryAlgorithm.h>
 #include <AssembleNodalGradNonConformalAlgorithm.h>
 #include <AssembleNodalGradUAlgorithmDriver.h>
 #include <AssembleNodalGradUEdgeAlgorithm.h>
@@ -2666,14 +2667,14 @@ ContinuityEquationSystem::register_open_bc(
       = assembleNodalGradAlgDriver_->algMap_.find(algType);
     if ( it == assembleNodalGradAlgDriver_->algMap_.end() ) {
       Algorithm *theAlg 
-        = new AssembleNodalGradBoundaryAlgorithm(realm_, part, pressureBC == NULL ? pressure_ : pressureBC, 
-                                                 &dpdxNone, edgeNodalGradient_);
+        = new AssembleNodalGradPBoundaryAlgorithm(realm_, part, pressureBC == NULL ? pressure_ : pressureBC,
+                                                  &dpdxNone, edgeNodalGradient_);
       assembleNodalGradAlgDriver_->algMap_[algType] = theAlg;
     }
     else {
       it->second->partVec_.push_back(part);
     }
-  }
+}
 
   // mdot at open and lhs
   if ( !elementContinuityEqs_ ) {
