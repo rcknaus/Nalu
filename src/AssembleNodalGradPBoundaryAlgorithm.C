@@ -22,6 +22,7 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/Part.hpp>
+#include <stk_mesh/base/FieldParallel.hpp>
 
 namespace sierra{
 namespace nalu{
@@ -46,19 +47,6 @@ AssembleNodalGradPBoundaryAlgorithm::AssembleNodalGradPBoundaryAlgorithm(
     dqdx_(dqdx),
     useShifted_(useShifted)
 {
-}
-
-
-void subtract_normal_component(int dim, const double* normal, double* grad_p)
-{
-  double grad_p_dot_n = 0;
-  for (int j = 0; j < dim; ++j) {
-    grad_p_dot_n += normal[j] * grad_p[j];
-  }
-
-  for (int j = 0; j < dim; ++j) {
-    grad_p[j] -= grad_p_dot_n * normal[j];
-  }
 }
 
 //--------------------------------------------------------------------------
@@ -86,6 +74,8 @@ AssembleNodalGradPBoundaryAlgorithm::execute()
   // define some common selectors
   stk::mesh::Selector s_locally_owned_union = meta_data.locally_owned_part()
     &stk::mesh::selectUnion(partVec_);
+
+  std::vector<stk::topology> parentTopo;
 
   stk::mesh::BucketVector const& face_buckets =
     realm_.get_buckets( meta_data.side_rank(), s_locally_owned_union );
@@ -116,7 +106,6 @@ AssembleNodalGradPBoundaryAlgorithm::execute()
       meFC->shape_fcn(&p_shape_function[0]);
 
     for ( stk::mesh::Bucket::size_type k = 0 ; k < length ; ++k ) {
-
       // face data
       const double * areaVec = stk::mesh::field_data(*exposedAreaVec, b, k);
 
@@ -141,6 +130,7 @@ AssembleNodalGradPBoundaryAlgorithm::execute()
         // nearest node
         const int nn = ipNodeMap[ip];
 
+
         stk::mesh::Entity nodeNN = face_node_rels[nn];
 
         // pointer to fields to assemble
@@ -160,28 +150,12 @@ AssembleNodalGradPBoundaryAlgorithm::execute()
         // nearest node volume
         double inv_volNN = 1.0/volNN;
 
-        double aMag = 0.0;
-        for ( int j = 0; j < nDim; ++j ) {
-          aMag += areaVec[ip*nDim+j]*areaVec[ip*nDim+j];
-        }
-        aMag = std::sqrt(aMag);
-        ThrowAssert(aMag > std::numeric_limits<double>::min());
-        const double inv_amag = 1.0 / aMag;
-
-        constexpr int maxDim = 3;
-        double normal[maxDim] = {};
-        ThrowAssert(nDim <= maxDim);
-
         // assemble to nearest node
         for ( int j = 0; j < nDim; ++j ) {
-          normal[j] = areaVec[ip*nDim+j] * inv_amag;
           double fac = qIp*areaVec[ip*nDim+j];
           gradQNN[j] += fac*inv_volNN;
         }
 
-        if (realm_.solutionOptions_->activateOpenMdotCorrection_) {
-          subtract_normal_component(nDim, normal, gradQNN);
-        }
       }
     }
   }
