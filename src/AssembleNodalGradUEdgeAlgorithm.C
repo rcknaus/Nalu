@@ -59,7 +59,7 @@ AssembleNodalGradUEdgeAlgorithm::execute()
   // define some common selectors
   stk::mesh::Selector s_locally_owned_union = meta_data.locally_owned_part()
     & stk::mesh::selectUnion(partVec_)  
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   //===========================================================
   // assemble edge-based gradient operator to the node

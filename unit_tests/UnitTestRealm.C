@@ -144,6 +144,9 @@ NaluTest::create_realm(const YAML::Node& realm_node, const std::string realm_typ
   realm->bulkData_ = new stk::mesh::BulkData(*realm->metaData_, comm_);
   sim_.realms_->realmVector_.push_back(realm);
 
+  //set whole mesh as active
+  realm->activate_parts({&realm->meta_data().universal_part()});
+
   return *realm;
 }
 

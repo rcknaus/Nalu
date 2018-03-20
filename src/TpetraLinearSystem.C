@@ -150,7 +150,7 @@ TpetraLinearSystem::beginLinearSystemConstruction()
 
   // create a localID for all active nodes in the mesh...
   const stk::mesh::Selector s_universal = metaData.universal_part()
-      & !(realm_.get_inactive_selector());
+      & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets =
       realm_.get_buckets( stk::topology::NODE_RANK, s_universal );
@@ -330,7 +330,7 @@ TpetraLinearSystem::buildNodeGraph(const stk::mesh::PartVector & parts)
   const stk::mesh::Selector s_owned = metaData.locally_owned_part()
     & stk::mesh::selectUnion(parts) 
     & !(stk::mesh::selectUnion(realm_.get_slave_part_vector()))
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets =
     realm_.get_buckets( stk::topology::NODE_RANK, s_owned );
@@ -360,7 +360,7 @@ TpetraLinearSystem::buildEdgeToNodeGraph(const stk::mesh::PartVector & parts)
 
   const stk::mesh::Selector s_owned = metaData.locally_owned_part()
     & stk::mesh::selectUnion(parts) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets =
     realm_.get_buckets( stk::topology::EDGE_RANK, s_owned );
@@ -398,7 +398,7 @@ TpetraLinearSystem::buildFaceToNodeGraph(const stk::mesh::PartVector & parts)
 
   const stk::mesh::Selector s_owned = metaData.locally_owned_part()
     & stk::mesh::selectUnion(parts) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets =
     realm_.get_buckets( metaData.side_rank(), s_owned );
@@ -430,7 +430,7 @@ TpetraLinearSystem::buildElemToNodeGraph(const stk::mesh::PartVector & parts)
 
   const stk::mesh::Selector s_owned = metaData.locally_owned_part()
     & stk::mesh::selectUnion(parts) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   connectionSetKK_.reset_failed_insert_flag();
   stk::mesh::BucketVector const& buckets =
@@ -463,7 +463,7 @@ TpetraLinearSystem::buildReducedElemToNodeGraph(const stk::mesh::PartVector & pa
 
   const stk::mesh::Selector s_owned = metaData.locally_owned_part()
     & stk::mesh::selectUnion(parts) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets =
     realm_.get_buckets( stk::topology::ELEMENT_RANK, s_owned );
@@ -514,7 +514,7 @@ TpetraLinearSystem::buildFaceElemToNodeGraph(const stk::mesh::PartVector & parts
 
   const stk::mesh::Selector s_owned = metaData.locally_owned_part()
     & stk::mesh::selectUnion(parts) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& face_buckets =
     realm_.get_buckets( metaData.side_rank(), s_owned );
@@ -681,7 +681,7 @@ TpetraLinearSystem::copy_stk_to_tpetra(
   const stk::mesh::Selector selector = stk::mesh::selectField(*stkField) 
     & metaData.locally_owned_part() 
     & !(stk::mesh::selectUnion(realm_.get_slave_part_vector())) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets = bulkData.get_buckets(stk::topology::NODE_RANK, selector);
 
@@ -1155,7 +1155,7 @@ TpetraLinearSystem::applyDirichletBCs(
     = (metaData.locally_owned_part() | metaData.globally_shared_part())
     & stk::mesh::selectUnion(parts)
     & stk::mesh::selectField(*solutionField) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& buckets =
     realm_.get_buckets( stk::topology::NODE_RANK, selector );
@@ -1702,7 +1702,7 @@ TpetraLinearSystem::copy_tpetra_to_stk(
   const stk::mesh::Selector selector = stk::mesh::selectField(*stkField)
     & metaData.locally_owned_part() 
     & !(stk::mesh::selectUnion(realm_.get_slave_part_vector()))
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
   
   stk::mesh::BucketVector const& buckets =
     realm_.get_buckets(stk::topology::NODE_RANK, selector);

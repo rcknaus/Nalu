@@ -62,7 +62,7 @@ public:
    stk::mesh::Selector elemSelector =
            meta_data.locally_owned_part()
          & stk::mesh::selectUnion(partVec_)
-         & !realm_.get_inactive_selector();
+         & realm_.get_active_selector();
  
    stk::mesh::BucketVector const& elem_buckets =
            realm_.get_buckets(entityRank_, elemSelector );

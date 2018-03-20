@@ -617,7 +617,7 @@ TurbulenceAveragingPostProcessing::execute()
     stk::mesh::Selector s_all_nodes
       = (metaData.locally_owned_part() | metaData.globally_shared_part())
       & stk::mesh::selectUnion(avInfo->partVec_) 
-      & !(realm_.get_inactive_selector());
+      & realm_.get_active_selector();
 
     stk::mesh::BucketVector const& node_buckets =
       realm_.get_buckets( stk::topology::NODE_RANK, s_all_nodes );
@@ -714,8 +714,9 @@ TurbulenceAveragingPostProcessing::execute()
       // need locally owned and active nodes
       stk::mesh::Selector s_locally_owned_nodes
         = metaData.locally_owned_part() & stk::mesh::selectUnion(avInfo->partVec_)
-        & !(realm_.get_inactive_selector())
+        & realm_.get_active_selector()
         & !(stk::mesh::selectUnion(realm_.get_slave_part_vector()));
+
       compute_mean_resolved_ke(avInfo->name_, s_locally_owned_nodes);
     }
     

@@ -474,7 +474,7 @@ HypreLinearSystem::applyDirichletBCs(
     meta.locally_owned_part() &
     stk::mesh::selectUnion(parts) &
     stk::mesh::selectField(*solutionField) &
-    !(realm_.get_inactive_selector()));
+    realm_.get_active_selector();
 
   const auto& bkts = realm_.get_buckets(
     stk::topology::NODE_RANK, sel);
@@ -594,7 +594,7 @@ HypreLinearSystem::copy_hypre_to_stk(
   const auto sel = stk::mesh::selectField(*stkField)
     & meta.locally_owned_part()
     & !(stk::mesh::selectUnion(realm_.get_slave_part_vector()))
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   const auto& bkts = bulk.get_buckets(
     stk::topology::NODE_RANK, sel);

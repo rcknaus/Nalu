@@ -361,8 +361,8 @@ class Realm {
   stk::mesh::MetaData & meta_data();
   const stk::mesh::MetaData & meta_data() const;
 
-  // inactive part
-  stk::mesh::Selector get_inactive_selector();
+  // active part
+  stk::mesh::Selector get_active_selector();
 
   // push back equation to equation systems vector
   void push_equation_to_systems(
@@ -530,6 +530,8 @@ class Realm {
    */
   stk::mesh::PartVector bcPartVec_;
 
+  stk::mesh::Selector activeSelector_;
+
   // empty part vector should it be required
   stk::mesh::PartVector emptyPartVector_;
 
@@ -550,6 +552,9 @@ class Realm {
   void process_io_transfer();
   void process_external_data_transfer();
   
+  void activate_parts(const stk::mesh::PartVector& part);
+  void deactivate_parts(const stk::mesh::PartVector& part);
+
   // process end of time step converged work
   void post_converged_work();
 

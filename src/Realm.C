@@ -427,9 +427,11 @@ Realm::initialize()
 
   // interior algorithm creation
   setup_interior_algorithms();
+  activate_parts(interiorPartVec_);
 
   // create boundary conditions
   setup_bc();
+  activate_parts(bcPartVec_);
 
   // post processing algorithm creation
   setup_post_processing_algorithms();
@@ -2417,6 +2419,9 @@ void
 Realm::initialize_overset()
 {
   oversetManager_->initialize();
+
+  deactivate_parts({oversetManager_->inActivePart_});
+  activate_parts(oversetManager_->orphanPointSurfaceVecBackground_);
 }
 
 //--------------------------------------------------------------------------
@@ -3084,7 +3089,6 @@ Realm::register_inflow_bc(
 
   // push back the part for book keeping and, later, skin mesh
   bcPartVec_.push_back(part);
-
   const int nDim = metaData_->spatial_dimension();
 
   // register fields
@@ -3126,7 +3130,6 @@ Realm::register_open_bc(
 
   // push back the part for book keeping and, later, skin mesh
   bcPartVec_.push_back(part);
-
   const int nDim = metaData_->spatial_dimension();
 
   // register fields
@@ -3168,7 +3171,6 @@ Realm::register_symmetry_bc(
 
   // push back the part for book keeping and, later, skin mesh
   bcPartVec_.push_back(part);
-
   const int nDim = metaData_->spatial_dimension();
 
   // register fields
@@ -3337,7 +3339,7 @@ Realm::setup_overset_bc(
       throw std::runtime_error("Invalid setting for overset connectivity");
       break;
     }
-  }   
+  }
 }
 
 //--------------------------------------------------------------------------
@@ -3719,7 +3721,7 @@ Realm::set_hypre_global_id()
   // Fill with an invalid value for future error checking
   stk::mesh::field_fill(std::numeric_limits<HypreIntType>::max(), *hypreGlobalId_);
 
-  const stk::mesh::Selector s_local = metaData_->locally_owned_part() & !get_inactive_selector();
+  const stk::mesh::Selector s_local = metaData_->locally_owned_part() & get_active_selector();
   const auto& bkts = bulkData_->get_buckets(
     stk::topology::NODE_RANK, s_local);
 
@@ -4948,31 +4950,25 @@ Realm::get_activate_aura()
 }
 
 //--------------------------------------------------------------------------
-//-------- get_inactive_selector() -----------------------------------------
+//-------- get_active_selector() -------------------------------------------
 //--------------------------------------------------------------------------
-stk::mesh::Selector
-Realm::get_inactive_selector()
+
+void
+Realm::activate_parts(const stk::mesh::PartVector& parts)
 {
-  // accumulate inactive parts relative to the universal part
-  
-  // provide inactive Overset part that excludes background surface
-  //
-  // Treat this selector differently because certain entities from interior
-  // blocks could have been inactivated by the overset algorithm. 
-  stk::mesh::Selector nothing;
-  stk::mesh::Selector inactiveOverSetSelector = (hasOverset_) ?
-      oversetManager_->get_inactive_selector() : nothing;
+  activeSelector_ |= stk::mesh::selectUnion(parts);
+}
 
-  stk::mesh::Selector otherInactiveSelector = (
-    metaData_->universal_part()
-    & !(stk::mesh::selectUnion(interiorPartVec_))
-    & !(stk::mesh::selectUnion(bcPartVec_)));
+void
+Realm::deactivate_parts(const stk::mesh::PartVector& parts)
+{
+  activeSelector_ -= stk::mesh::selectUnion(parts);
+}
 
-  if (interiorPartVec_.empty() && bcPartVec_.empty()) {
-    otherInactiveSelector = nothing;
-  }
-
-  return inactiveOverSetSelector | otherInactiveSelector;
+stk::mesh::Selector
+Realm::get_active_selector()
+{
+  return activeSelector_;
 }
 
 //--------------------------------------------------------------------------

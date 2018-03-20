@@ -320,7 +320,7 @@ SolutionNormPostProcessing::execute()
   stk::mesh::Selector s_locall_owned
     = metaData.locally_owned_part() 
     & stk::mesh::selectUnion(partVec_) 
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   // size and initialize norm-related quantities; Loo, L1 and L2
   std::vector<double> l_LooNorm(totalDofCompSize_);

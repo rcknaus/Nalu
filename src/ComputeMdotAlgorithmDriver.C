@@ -198,7 +198,7 @@ ComputeMdotAlgorithmDriver::compute_accumulation()
 
   // selector (everywhere density lives, locally owned and active) 
   stk::mesh::Selector s_locally_owned = stk::mesh::selectField(*density)    
-    & !(realm_.get_inactive_selector());
+    & realm_.get_active_selector();
 
   stk::mesh::BucketVector const& elem_buckets =
     realm_.get_buckets( stk::topology::ELEMENT_RANK, s_locally_owned);
@@ -302,7 +302,7 @@ ComputeMdotAlgorithmDriver::correct_open_mdot(const double finalCorrection)
 
     // selector (everywhere density lives, locally owned and active) 
     stk::mesh::Selector s_locally_owned = stk::mesh::selectField(*openMassFlowRate)    
-      & !(realm_.get_inactive_selector());
+      & realm_.get_active_selector();
     
     stk::mesh::BucketVector const& face_buckets =
       realm_.get_buckets( metaData.side_rank(), s_locally_owned );
