@@ -127,7 +127,7 @@ PyrSCV::ipNodeMap(
 DoubleType polyhedral_volume_by_faces(int ncoords, const DoubleType volcoords[][3],
                                       int ntriangles, const int triangleFaceTable[][3])
 {
-  DoubleType xface[3];
+  AlignedArrayDoubleType xface[3];
 
   DoubleType volume = 0.0;
 
@@ -166,7 +166,7 @@ DoubleType polyhedral_volume_by_faces(int ncoords, const DoubleType volcoords[][
 
 DoubleType octohedron_volume_by_triangle_facets(const DoubleType volcoords[10][3])
 {
-  DoubleType coords[14][3];
+  AlignedArrayDoubleType coords[14][3];
   const int triangularFacetTable[24][3] = {
     {1, 3, 10}, 
     {2, 10, 3},
@@ -231,9 +231,9 @@ void PyrSCV::determinant(
 {
   int npe = nodesPerElement_;
   int nscv = numIntPoints_;
-  DoubleType coords[19][3];
-  DoubleType ehexcoords[8][3];
-  DoubleType epyrcoords[10][3];
+  AlignedArrayDoubleType coords[19][3];
+  AlignedArrayDoubleType ehexcoords[8][3];
+  AlignedArrayDoubleType epyrcoords[10][3];
 
   const int pyramidSubcontrolNodeTable[5][10] = {
      {0,  5,  9,  8, 11, 12, 18, 17, -1, -1},
@@ -611,8 +611,8 @@ void PyrSCS::determinant(
     {13, 16, 18, 14},  // sc face 7 -- points from 3 -> 5
     {15, 17, 18, 16}   // sc face 8 -- points from 4 -> 5
   };
-  DoubleType coords[19][3];
-  DoubleType scscoords[4][3];
+  AlignedArrayDoubleType coords[19][3];
+  AlignedArrayDoubleType scscoords[4][3];
   const double half = 0.5;
   const double one3rd = 1.0/3.0;
   const double one4th = 1.0/4.0;
@@ -851,7 +851,7 @@ void PyrSCS::face_grad_op_quad(int face_ordinal, SharedMemView<DoubleType**>& co
 
   constexpr int derivSize = quad_traits::numFaceIp_ *  quad_traits::nodesPerElement_ * quad_traits::nDim_;
 
-  DoubleType psi[derivSize];
+  AlignedArrayDoubleType psi[derivSize];
   QuadFaceGradType deriv(psi);
 
   const int offset = (face_ordinal != 4) ? 0 : tri_traits::nDim_ * tri_traits::numFaceIp_ * face_ordinal;
@@ -864,7 +864,7 @@ void PyrSCS::face_grad_op_tri(int face_ordinal, SharedMemView<DoubleType**>& coo
   using tri_traits = AlgTraitsTri3Pyr5;
 
   constexpr int derivSize = tri_traits::numFaceIp_ *  tri_traits::nodesPerElement_ * tri_traits::nDim_;
-  DoubleType psi[derivSize];
+  AlignedArrayDoubleType psi[derivSize];
   TriFaceGradType deriv(psi);
 
   const int offset = (face_ordinal != 4) ? tri_traits::nDim_ * tri_traits::numFaceIp_ * face_ordinal : 0;
@@ -881,17 +881,17 @@ void PyrSCS::face_grad_op(
   using quad_traits = AlgTraitsQuad4Pyr5;
 
   constexpr int quad_derivSize = quad_traits::numFaceIp_ *  quad_traits::nodesPerElement_ * quad_traits::nDim_;
-  DoubleType quad_grad_temp[quad_derivSize];
+  AlignedArrayDoubleType quad_grad_temp[quad_derivSize];
   QuadFaceGradType quad_gradop(quad_grad_temp);
   face_grad_op_quad(face_ordinal, coords, quad_gradop);
 
   constexpr int tri_derivSize = tri_traits::numFaceIp_ *  tri_traits::nodesPerElement_ * tri_traits::nDim_;
-  DoubleType tri_grad_temp[tri_derivSize];
+  AlignedArrayDoubleType tri_grad_temp[tri_derivSize];
   TriFaceGradType tri_gradop(tri_grad_temp);
   face_grad_op_tri(face_ordinal, coords, tri_gradop);
 
   const int length = (face_ordinal == 4) ? quad_derivSize : tri_derivSize;
-  DoubleType triMask = (face_ordinal == 4) ? 0: 1;
+  AlignedArrayDoubleType triMask = (face_ordinal == 4) ? 0: 1;
   DoubleType* gradop_ptr = gradop.ptr_on_device();
   for (int k = 0; k < length; ++k) {
     gradop_ptr[k] = (1 - triMask) * quad_grad_temp[k] + triMask * tri_grad_temp[k];

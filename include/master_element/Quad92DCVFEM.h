@@ -56,11 +56,11 @@ private:
 
   DoubleType jacobian_determinant(
     const SharedMemView<DoubleType**> &coords,
-    const double *POINTER_RESTRICT shapeDerivs ) const;
+    const double *KOKKOS_RESTRICT shapeDerivs ) const;
 
   double jacobian_determinant(
-    const double *POINTER_RESTRICT elemNodalCoords,
-    const double *POINTER_RESTRICT shapeDerivs ) const;
+    const double *KOKKOS_RESTRICT elemNodalCoords,
+    const double *KOKKOS_RESTRICT shapeDerivs ) const;
 
   std::vector<double> ipWeight_;
 };
@@ -148,13 +148,13 @@ private:
   template <Jacobian::Direction direction> void
   area_vector(
     const SharedMemView<DoubleType**>& elemNodalCoords,
-    double *POINTER_RESTRICT shapeDeriv,
-    DoubleType *POINTER_RESTRICT areaVector ) const;
+    double *KOKKOS_RESTRICT shapeDeriv,
+    DoubleType *KOKKOS_RESTRICT areaVector ) const;
   template <Jacobian::Direction direction> void
   area_vector(
-    const double *POINTER_RESTRICT elemNodalCoords,
-    double *POINTER_RESTRICT shapeDeriv,
-    double *POINTER_RESTRICT areaVector ) const;
+    const double *KOKKOS_RESTRICT elemNodalCoords,
+    double *KOKKOS_RESTRICT shapeDeriv,
+    double *KOKKOS_RESTRICT areaVector ) const;
 
   std::vector<ContourData> ipInfo_;
   int ipsPerFace_;

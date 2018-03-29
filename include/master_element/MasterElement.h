@@ -514,9 +514,9 @@ public:
 
 private:
   void area_vector(
-    const double *POINTER_RESTRICT coords,
+    const double *KOKKOS_RESTRICT coords,
     const double s,
-    double *POINTER_RESTRICT areaVector) const;
+    double *KOKKOS_RESTRICT areaVector) const;
 
   std::vector<double> ipWeight_;
 };

@@ -162,7 +162,7 @@ Quad92DSCV::ipNodeMap(
 DoubleType
 Quad92DSCV::jacobian_determinant(
   const SharedMemView<DoubleType**> &elemNodalCoords,      
-  const double *POINTER_RESTRICT shapeDerivs) const
+  const double *KOKKOS_RESTRICT shapeDerivs) const
 {
   DoubleType dx_ds1 = 0.0;  DoubleType dx_ds2 = 0.0;
   DoubleType dy_ds1 = 0.0;  DoubleType dy_ds2 = 0.0;
@@ -245,8 +245,8 @@ void Quad92DSCV::determinant(
 //--------------------------------------------------------------------------
 double
 Quad92DSCV::jacobian_determinant(
-  const double *POINTER_RESTRICT elemNodalCoords,
-  const double *POINTER_RESTRICT shapeDerivs) const
+  const double *KOKKOS_RESTRICT elemNodalCoords,
+  const double *KOKKOS_RESTRICT shapeDerivs) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0;
@@ -767,7 +767,7 @@ void Quad92DSCS::gij(
   constexpr int npe  = Traits::nodesPerElement_;
   constexpr int nint = Traits::numScsIp_;
 
-  DoubleType dx_ds[2][2], ds_dx[2][2];
+  AlignedArrayDoubleType dx_ds[2][2], ds_dx[2][2];
 
   for (int ki=0; ki<nint; ++ki) {
     dx_ds[0][0] = 0.0; 
@@ -855,8 +855,8 @@ Quad92DSCS::opposingFace(
 template <Jacobian::Direction direction> void
 Quad92DSCS::area_vector(
   const SharedMemView<DoubleType**>& elemNodalCoords,             
-  double *POINTER_RESTRICT shapeDeriv,
-  DoubleType *POINTER_RESTRICT normalVec ) const
+  double *KOKKOS_RESTRICT shapeDeriv,
+  DoubleType *KOKKOS_RESTRICT normalVec ) const
 {
   constexpr int s1Component = (direction == Jacobian::S_DIRECTION) ?
       Jacobian::T_DIRECTION : Jacobian::S_DIRECTION;
@@ -876,9 +876,9 @@ Quad92DSCS::area_vector(
 }
 template <Jacobian::Direction direction> void
 Quad92DSCS::area_vector(
-  const double *POINTER_RESTRICT elemNodalCoords,
-  double *POINTER_RESTRICT shapeDeriv,
-  double *POINTER_RESTRICT normalVec ) const
+  const double *KOKKOS_RESTRICT elemNodalCoords,
+  double *KOKKOS_RESTRICT shapeDeriv,
+  double *KOKKOS_RESTRICT normalVec ) const
 {
   constexpr int s1Component = (direction == Jacobian::S_DIRECTION) ?
       Jacobian::T_DIRECTION : Jacobian::S_DIRECTION;

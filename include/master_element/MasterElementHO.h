@@ -68,8 +68,8 @@ private:
   void set_interior_info();
 
   double jacobian_determinant(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT shapeDerivs ) const;
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT shapeDerivs ) const;
 
   const ElementDescription elem_;
   LagrangeBasis basis_;
@@ -163,22 +163,22 @@ private:
 
   template <Jacobian::Direction direction> void
   area_vector(
-    const double *POINTER_RESTRICT elemNodalCoords,
-    double *POINTER_RESTRICT shapeDeriv,
-    double *POINTER_RESTRICT areaVector) const;
+    const double *KOKKOS_RESTRICT elemNodalCoords,
+    double *KOKKOS_RESTRICT shapeDeriv,
+    double *KOKKOS_RESTRICT areaVector) const;
 
   void gradient(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT shapeDeriv,
-    double* POINTER_RESTRICT grad,
-    double* POINTER_RESTRICT det_j ) const;
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT shapeDeriv,
+    double* KOKKOS_RESTRICT grad,
+    double* KOKKOS_RESTRICT det_j ) const;
 
   void gradient(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT geometricShapeDeriv,
-    const double*  POINTER_RESTRICT shapeDeriv,
-    double* POINTER_RESTRICT grad,
-    double* POINTER_RESTRICT det_j ) const;
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT geometricShapeDeriv,
+    const double*  KOKKOS_RESTRICT shapeDeriv,
+    double* KOKKOS_RESTRICT grad,
+    double* KOKKOS_RESTRICT det_j ) const;
 
   const ElementDescription elem_;
   LagrangeBasis basis_;
@@ -232,8 +232,8 @@ private:
   void eval_shape_derivs_at_ips();
 
   void area_vector(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT shapeDeriv,
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT shapeDeriv,
     std::array<double,3>& areaVector) const;
 
   const ElementDescription elem_;
@@ -281,8 +281,8 @@ private:
   void set_interior_info();
 
   double jacobian_determinant(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT shapeDerivs ) const;
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT shapeDerivs ) const;
 
   const ElementDescription elem_;
   LagrangeBasis basis_;
@@ -370,22 +370,22 @@ private:
 
   template <Jacobian::Direction direction> void
   area_vector(
-    const double *POINTER_RESTRICT elemNodalCoords,
-    double *POINTER_RESTRICT shapeDeriv,
-    double *POINTER_RESTRICT normalVec ) const;
+    const double *KOKKOS_RESTRICT elemNodalCoords,
+    double *KOKKOS_RESTRICT shapeDeriv,
+    double *KOKKOS_RESTRICT normalVec ) const;
 
   void gradient(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT shapeDeriv,
-    double* POINTER_RESTRICT grad,
-    double* POINTER_RESTRICT det_j) const;
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT shapeDeriv,
+    double* KOKKOS_RESTRICT grad,
+    double* KOKKOS_RESTRICT det_j) const;
 
   void gradient(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT geometricShapeDeriv,
-    const double* POINTER_RESTRICT shapeDeriv,
-    double* POINTER_RESTRICT grad,
-    double* POINTER_RESTRICT det_j ) const;
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT geometricShapeDeriv,
+    const double* KOKKOS_RESTRICT shapeDeriv,
+    double* KOKKOS_RESTRICT grad,
+    double* KOKKOS_RESTRICT det_j ) const;
 
   const ElementDescription elem_;
   LagrangeBasis basis_;
@@ -434,8 +434,8 @@ public:
 
 private:
   void area_vector(
-    const double* POINTER_RESTRICT elemNodalCoords,
-    const double* POINTER_RESTRICT shapeDeriv,
+    const double* KOKKOS_RESTRICT elemNodalCoords,
+    const double* KOKKOS_RESTRICT shapeDeriv,
     std::array<double,2>& areaVector) const;
 
   const ElementDescription elem_;

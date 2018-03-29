@@ -1371,9 +1371,9 @@ void Hex27SCS::determinant(SharedMemView<DoubleType**>&coords,  SharedMemView<Do
 //--------------------------------------------------------------------------
 template <Jacobian::Direction direction> void
 Hex27SCS::area_vector(
-  const double *POINTER_RESTRICT elemNodalCoords,
-  double *POINTER_RESTRICT shapeDeriv,
-  double *POINTER_RESTRICT areaVector) const
+  const double *KOKKOS_RESTRICT elemNodalCoords,
+  double *KOKKOS_RESTRICT shapeDeriv,
+  double *KOKKOS_RESTRICT areaVector) const
 {
 
   constexpr int s1Component = (direction == Jacobian::T_DIRECTION) ?
@@ -2355,9 +2355,9 @@ double Quad93DSCS::parametric_distance(const std::vector<double> &x)
 //--------------------------------------------------------------------------
 void
 Quad93DSCS::area_vector(
-  const double *POINTER_RESTRICT elemNodalCoords,
-  const double *POINTER_RESTRICT shapeDeriv,
-  double *POINTER_RESTRICT areaVector) const
+  const double *KOKKOS_RESTRICT elemNodalCoords,
+  const double *KOKKOS_RESTRICT shapeDeriv,
+  double *KOKKOS_RESTRICT areaVector) const
 {
    // return the normal area vector given shape derivatives dnds OR dndt
    double dx_ds1 = 0.0; double dy_ds1 = 0.0; double dz_ds1 = 0.0;

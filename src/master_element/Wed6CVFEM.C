@@ -127,8 +127,8 @@ void WedSCV::determinant(
   const double half = 0.5;
   const double one3rd = 1.0/3.0;
   const double one6th = 1.0/6.0;
-  DoubleType coords[21][3];
-  DoubleType ehexcoords[8][3];
+  AlignedArrayDoubleType coords[21][3];
+  AlignedArrayDoubleType ehexcoords[8][3];
   const int dim[3] = {0, 1, 2};
 
   // element vertices
@@ -485,8 +485,8 @@ void WedSCS::determinant(
   const double one6th = 1.0/6.0;
   const double half = 0.5;
   const int dim[3] = {0, 1, 2};
-  DoubleType coords[21][3];
-  DoubleType scscoords[4][3];
+  AlignedArrayDoubleType coords[21][3];
+  AlignedArrayDoubleType scscoords[4][3];
 
   // element vertices
   for (int j=0; j < 6; j++)
@@ -756,7 +756,7 @@ void WedSCS::face_grad_op_tri(int face_ordinal, SharedMemView<DoubleType**>& coo
 
   constexpr int derivSize = tri_traits::numFaceIp_ *  tri_traits::nodesPerElement_ * tri_traits::nDim_;
 
-  DoubleType psi[derivSize];
+  AlignedArrayDoubleType psi[derivSize];
   TriFaceGradType deriv(psi);
 
   const int offset = (face_ordinal < 3) ? 0 : quad_traits::numFaceIp_ * face_ordinal;
@@ -769,7 +769,7 @@ void WedSCS::face_grad_op_quad(int face_ordinal, SharedMemView<DoubleType**>& co
   using quad_traits = AlgTraitsQuad4Wed6;
 
   constexpr int derivSize = quad_traits::numFaceIp_ *  quad_traits::nodesPerElement_ * quad_traits::nDim_;
-  DoubleType psi[derivSize];
+  AlignedArrayDoubleType psi[derivSize];
   QuadFaceGradType deriv(psi);
 
   const int offset = (face_ordinal < 3) ? quad_traits::numFaceIp_ * face_ordinal : 0;
@@ -786,17 +786,17 @@ void WedSCS::face_grad_op(
   using quad_traits = AlgTraitsQuad4Wed6;
 
   constexpr int quad_derivSize = quad_traits::numFaceIp_ *  quad_traits::nodesPerElement_ * quad_traits::nDim_;
-  DoubleType quad_grad_temp[quad_derivSize];
+  AlignedArrayDoubleType quad_grad_temp[quad_derivSize];
   QuadFaceGradType quad_gradop(quad_grad_temp);
   face_grad_op_quad(face_ordinal, coords, quad_gradop);
 
   constexpr int tri_derivSize = tri_traits::numFaceIp_ *  tri_traits::nodesPerElement_ * tri_traits::nDim_;
-  DoubleType tri_grad_temp[tri_derivSize];
+  AlignedArrayDoubleType tri_grad_temp[tri_derivSize];
   TriFaceGradType tri_gradop(tri_grad_temp);
   face_grad_op_tri(face_ordinal, coords, tri_gradop);
 
   const int length = (face_ordinal < 3) ? quad_derivSize : tri_derivSize;
-  DoubleType triMask = (face_ordinal < 3) ? 0 : 1;
+  AlignedArrayDoubleType triMask = (face_ordinal < 3) ? 0 : 1;
   DoubleType* gradop_ptr = gradop.ptr_on_device();
   for (int k = 0; k < length; ++k) {
     gradop_ptr[k] = (1-triMask) * quad_grad_temp[k] + triMask * tri_grad_temp[k];

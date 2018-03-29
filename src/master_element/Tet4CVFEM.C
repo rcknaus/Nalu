@@ -120,8 +120,8 @@ void TetSCV::determinant(
 
   const double half = 0.5;
   const double one3rd = 1.0/3.0;
-  DoubleType coords[15][3];
-  DoubleType ehexcoords[8][3];
+  AlignedArrayDoubleType coords[15][3];
+  AlignedArrayDoubleType ehexcoords[8][3];
   const int dim[3] = {0, 1, 2};
 
   // element vertices
@@ -446,8 +446,8 @@ void TetSCS::determinant(
   const double one3rd = 1.0/3.0;
   const double one4th = 1.0/4.0;
   const int dim[] = {0, 1, 2};
-  DoubleType coords[15][3];
-  DoubleType scscoords[4][3];
+  AlignedArrayDoubleType coords[15][3];
+  AlignedArrayDoubleType scscoords[4][3];
 
   //element vertices
   for(int j=0; j<4; ++j) {
@@ -667,7 +667,7 @@ void TetSCS::face_grad_op(
   // one ip at a time
   constexpr int derivSize = traits::numFaceIp_ *  traits::nodesPerElement_ * traits::nDim_;
 
-  DoubleType wderiv[derivSize];
+  AlignedArrayDoubleType wderiv[derivSize];
   SharedMemView<DoubleType[traits::numFaceIp_][traits::nodesPerElement_][traits::nDim_]> deriv(wderiv);
   tet_deriv(deriv);
 

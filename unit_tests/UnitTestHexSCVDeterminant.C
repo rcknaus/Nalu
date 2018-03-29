@@ -96,7 +96,7 @@ TEST(HexSCV, grandyvol)
   unit_test_utils::fill_mesh_1_elem_per_proc_hex8(bulk);
   const auto& coordField = *static_cast<const VectorFieldType*>(meta.coordinate_field());
 
-  double v_coords[8][3];
+  NALU_ALIGN(64) DoubleType v_coords[8][3];
 
   std::mt19937 rng;
   rng.seed(std::mt19937::default_seed);
@@ -124,9 +124,9 @@ TEST(HexSCV, grandyvol)
 
       double exactVol = detQ;
       // start caliper
-      double volGrandy = sierra::nalu::hex_volume_grandy(v_coords);
+      DoubleType volGrandy = sierra::nalu::hex_volume_grandy(v_coords);
       // end caliper
-      EXPECT_NEAR(volGrandy, exactVol, tol);
+      EXPECT_NEAR(stk::simd::get_data(volGrandy,0), exactVol, tol);
     }
   }
 }

@@ -14,16 +14,12 @@
 
 #define NALU_ALIGN(size) __attribute__((aligned(size)))
 
-#if defined(__INTEL_COMPILER)
-#define POINTER_RESTRICT restrict
-#elif defined(__GNUC__)
-#define POINTER_RESTRICT __restrict__
-#else
-#define POINTER_RESTRICT
-#endif
+namespace stk { namespace simd { struct Double; } }
 
 namespace sierra {
 namespace nalu {
+
+using AlignedArrayDoubleType = stk::simd::Double __attribute__((aligned(KOKKOS_MEMORY_ALIGNMENT)));
 
 using HostSpace = Kokkos::HostSpace;
 using DeviceSpace = Kokkos::DefaultExecutionSpace;
@@ -32,8 +28,11 @@ using DeviceShmem = DeviceSpace::scratch_memory_space;
 using DynamicScheduleType = Kokkos::Schedule<Kokkos::Dynamic>;
 using TeamHandleType = Kokkos::TeamPolicy<DeviceSpace, DynamicScheduleType>::member_type;
 
+using KokkosAlignedTrait = Kokkos::MemoryTraits<Kokkos::Aligned>;
+
 template <typename T>
-using SharedMemView = Kokkos::View<T, Kokkos::LayoutRight, DeviceShmem, Kokkos::MemoryUnmanaged>;
+using SharedMemView = Kokkos::View<T, Kokkos::LayoutRight, DeviceShmem, Kokkos::MemoryTraits<Kokkos::Unmanaged | Kokkos::Aligned>>;
+
 
 using DeviceTeamPolicy = Kokkos::TeamPolicy<DeviceSpace>;
 using DeviceTeam = DeviceTeamPolicy::member_type;
@@ -48,31 +47,31 @@ inline DeviceTeamPolicy get_team_policy(const size_t sz, const size_t bytes_per_
 inline
 SharedMemView<int*> get_int_shmem_view_1D(const TeamHandleType& team, size_t len)
 {
-  return Kokkos::subview(SharedMemView<int**>(team.team_shmem(), team.team_size(), len), team.team_rank(), Kokkos::ALL());
+  return Kokkos::subview<KokkosAlignedTrait>(SharedMemView<int**>(team.team_shmem(), team.team_size(), len), team.team_rank(), Kokkos::ALL());
 }
 
 inline
 SharedMemView<stk::mesh::Entity*> get_entity_shmem_view_1D(const TeamHandleType& team, size_t len)
 {
-  return Kokkos::subview(SharedMemView<stk::mesh::Entity**>(team.team_shmem(), team.team_size(), len), team.team_rank(), Kokkos::ALL());
+  return Kokkos::subview<KokkosAlignedTrait>(SharedMemView<stk::mesh::Entity**>(team.team_shmem(), team.team_size(), len), team.team_rank(), Kokkos::ALL());
 }
 
 template<typename T>
 SharedMemView<T*> get_shmem_view_1D(const TeamHandleType& team, size_t len)
 {
-  return Kokkos::subview(SharedMemView<T**>(team.team_shmem(), team.team_size(), len), team.team_rank(), Kokkos::ALL());
+  return Kokkos::subview<KokkosAlignedTrait>(SharedMemView<T**>(team.team_shmem(), team.team_size(), len), team.team_rank(), Kokkos::ALL());
 }
 
 template<typename T>
 SharedMemView<T**> get_shmem_view_2D(const TeamHandleType& team, size_t len1, size_t len2)
 {
-  return Kokkos::subview(SharedMemView<T***>(team.team_shmem(), team.team_size(), len1, len2), team.team_rank(), Kokkos::ALL(), Kokkos::ALL());
+  return Kokkos::subview<KokkosAlignedTrait>(SharedMemView<T***>(team.team_shmem(), team.team_size(), len1, len2), team.team_rank(), Kokkos::ALL(), Kokkos::ALL());
 }
 
 template<typename T>
 SharedMemView<T***> get_shmem_view_3D(const TeamHandleType& team, size_t len1, size_t len2, size_t len3)
 {
-  return Kokkos::subview(SharedMemView<T****>(team.team_shmem(), team.team_size(), len1, len2, len3), team.team_rank(), Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+  return Kokkos::subview<KokkosAlignedTrait>(SharedMemView<T****>(team.team_shmem(), team.team_size(), len1, len2, len3), team.team_rank(), Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
 }
 
 template<typename SizeType, class Function>

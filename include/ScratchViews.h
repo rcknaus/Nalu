@@ -625,7 +625,7 @@ int calculate_shared_mem_bytes_per_thread(int lhsSize, int rhsSize, int scratchI
 {
     int bytes_per_thread = (rhsSize + lhsSize)*sizeof(double) + (2*scratchIdsSize)*sizeof(int) +
                            get_num_bytes_pre_req_data<double>(dataNeededByKernels, nDim);
-    bytes_per_thread *= 2*simdLen;
+    bytes_per_thread *= 8*simdLen;
     return bytes_per_thread;
 }
 
@@ -638,7 +638,7 @@ int calculate_shared_mem_bytes_per_thread(int lhsSize, int rhsSize, int scratchI
     int bytes_per_thread = (rhsSize + lhsSize)*sizeof(double) + (2*scratchIdsSize)*sizeof(int)
                          + sierra::nalu::get_num_bytes_pre_req_data<double>(faceDataNeeded, nDim)
                          + sierra::nalu::get_num_bytes_pre_req_data<double>(elemDataNeeded, nDim, meInfo);
-    bytes_per_thread *= 2*simdLen;
+    bytes_per_thread *= 8*simdLen;
     return bytes_per_thread;
 }
 

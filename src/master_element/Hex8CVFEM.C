@@ -20,6 +20,7 @@
 namespace sierra{
 namespace nalu{
 
+
 //-------- hex8_derivative -------------------------------------------------
 template <typename DerivType>
 void hex8_derivative(
@@ -30,6 +31,7 @@ void hex8_derivative(
   const DoubleType half = 0.50;
   const DoubleType one4th = 0.25;
   for (int  ip = 0; ip < npts; ++ip) {
+
     const DoubleType s1 = intgLoc[ip*3];
     const DoubleType s2 = intgLoc[ip*3+1];
     const DoubleType s3 = intgLoc[ip*3+2];
@@ -161,12 +163,13 @@ void HexSCV::determinant(
       { 25, 26, 23, 21, 16, 17, 15,  7}
   };
 
-  DoubleType coordv[27][3];
+  AlignedArrayDoubleType coordv[27][3];
   subdivide_hex_8(coords, coordv);
+  NaluEnv::self().naluOutput() << coords(1,0) << ", " << coords(1,1)  << coords(1,2) << std::endl;
 
   constexpr int numSCV = 8;
   for (int ip = 0; ip < numSCV; ++ip) {
-    DoubleType scvHex[8][3];
+    AlignedArrayDoubleType scvHex[8][3];
     for (int n = 0; n < 8; ++n) {
       const int subIndex = subDivisionTable[ip][n];
       for (int d = 0; d < 3; ++d) {
@@ -542,13 +545,13 @@ void HexSCS::determinant(
       { 21, 25, 26, 23 }
   };
 
-  DoubleType coordv[27][3];
+  AlignedArrayDoubleType coordv[27][3];
   subdivide_hex_8(coords, coordv);
 
   constexpr int npf = 4;
   constexpr int nscs = 12;
   for (int ics=0; ics < nscs; ++ics) {
-    DoubleType scscoords[4][3];
+    AlignedArrayDoubleType scscoords[4][3];
     for (int inode = 0; inode < npf; ++inode) {
       const int itrianglenode = hex_edge_facet_table[ics][inode];
       for (int d=0; d < 3; ++d) {
@@ -687,9 +690,8 @@ void HexSCS::face_grad_op(
   SharedMemView<DoubleType***>& gradop)
 {
   using traits = AlgTraitsQuad4Hex8;
-
   constexpr int derivSize = traits::numFaceIp_ * traits::nodesPerElement_ * traits::nDim_;
-  DoubleType psi[derivSize];
+  AlignedArrayDoubleType psi[derivSize];
   SharedMemView<DoubleType[traits::numFaceIp_][traits::nodesPerElement_][traits::nDim_]> deriv(psi);
 
   const int offset = traits::numFaceIp_ * traits::nDim_ * face_ordinal;

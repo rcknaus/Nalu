@@ -31,7 +31,7 @@ namespace nalu {
   template <typename AlgTraits, typename GradViewType, typename CoordViewType, typename OutputViewType>
   void generic_grad_op_3d(const GradViewType& referenceGradWeights, const CoordViewType& coords, OutputViewType& weights)
   {
-    using ftype = typename CoordViewType::value_type;
+    using ftype = NALU_ALIGN(64) typename CoordViewType::value_type;
     static_assert(std::is_same<ftype, typename GradViewType::value_type>::value,  "Incompatiable value type for views");
     static_assert(std::is_same<ftype, typename OutputViewType::value_type>::value,  "Incompatiable value type for views");
     static_assert(GradViewType::Rank == 3, "grad view assumed to be 3D");
@@ -84,26 +84,20 @@ namespace nalu {
       adjJac[2][1] = jact[0][2] * jact[1][0] - jact[1][2] * jact[0][0];
       adjJac[2][2] = jact[0][0] * jact[1][1] - jact[1][0] * jact[0][1];
 
-      ThrowAssertMsg(
-        stk::simd::are_any(
-          jact[0][0] * adjJac[0][0] + jact[1][0] * adjJac[1][0] + jact[2][0] * adjJac[2][0]
-          > tiny_positive_value()
-        ),
-        "Problem with Jacobian determinant"
-      );
+      ftype detj = jact[0][0] * adjJac[0][0] + jact[1][0] * adjJac[1][0] + jact[2][0] * adjJac[2][0];
+      ThrowAssertMsg(stk::simd::are_any(detj > tiny_positive_value()), "Problem with Jacobian determinant" );
+      const ftype inv_detj = stk::math::if_then_else(detj > tiny_positive_value(), 1.0 / detj, 1.0);
 
-      const ftype inv_detj = ftype(1.0) /
-          (jact[0][0] * adjJac[0][0] + jact[1][0] * adjJac[1][0] + jact[2][0] * adjJac[2][0]);
+      for (int d = 0; d < 3; ++d) {
+        adjJac[d][0] *= inv_detj;
+        adjJac[d][1] *= inv_detj;
+        adjJac[d][2] *= inv_detj;
+      }
 
       for (int n = 0; n < AlgTraits::nodesPerElement_; ++n) {
-        weights(ip, n, 0) = inv_detj *
-            (adjJac[0][0] * refGrad[n][0] + adjJac[0][1] * refGrad[n][1] + adjJac[0][2] * refGrad[n][2]);
-
-        weights(ip, n, 1) = inv_detj *
-            (adjJac[1][0] * refGrad[n][0] + adjJac[1][1] * refGrad[n][1] + adjJac[1][2] * refGrad[n][2]);
-
-        weights(ip, n, 2) = inv_detj *
-            (adjJac[2][0] * refGrad[n][0] + adjJac[2][1] * refGrad[n][1] + adjJac[2][2] * refGrad[n][2]);
+        weights(ip, n, 0) = adjJac[0][0] * refGrad[n][0] + adjJac[0][1] * refGrad[n][1] + adjJac[0][2] * refGrad[n][2];
+        weights(ip, n, 1) = adjJac[1][0] * refGrad[n][0] + adjJac[1][1] * refGrad[n][1] + adjJac[1][2] * refGrad[n][2];
+        weights(ip, n, 2) = adjJac[2][0] * refGrad[n][0] + adjJac[2][1] * refGrad[n][1] + adjJac[2][2] * refGrad[n][2];
       }
     }
   }
@@ -115,7 +109,7 @@ namespace nalu {
     OutputViewType& gup,
     OutputViewType& glo)
   {
-    using ftype = typename CoordViewType::value_type;
+    using ftype = NALU_ALIGN(64) typename CoordViewType::value_type;
     static_assert(std::is_same<ftype, typename GradViewType::value_type>::value,
       "Incompatiable value type for views");
     static_assert(std::is_same<ftype, typename OutputViewType::value_type>::value,
@@ -180,7 +174,7 @@ namespace nalu {
   template <typename AlgTraits, typename GradViewType, typename CoordViewType, typename OutputViewType>
   void generic_determinant_3d(GradViewType referenceGradWeights, CoordViewType coords, OutputViewType detj)
   {
-    using ftype = typename CoordViewType::value_type;
+    using ftype = NALU_ALIGN(64) typename CoordViewType::value_type;
     static_assert(std::is_same<ftype, typename GradViewType::value_type>::value,  "Incompatiable value type for views");
     static_assert(std::is_same<ftype, typename OutputViewType::value_type>::value,  "Incompatiable value type for views");
     static_assert(GradViewType::Rank == 3, "grad view assumed to be 3D");

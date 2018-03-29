@@ -13,7 +13,7 @@ void check_that_values_match(const sierra::nalu::SharedMemView<DoubleType*>& val
                              const double* oldValues)
 {
   for(size_t i=0; i<values.dimension(0); ++i) {
-      EXPECT_NEAR(stk::simd::get_data(values(i),0), oldValues[i], tol)<<"i:"<<i;
+    ASSERT_NEAR(stk::simd::get_data(values(i),0), oldValues[i], tol)<<"i:"<<i;
   }
 }
 
@@ -23,10 +23,41 @@ void check_that_values_match(const sierra::nalu::SharedMemView<DoubleType**>& va
   int counter = 0;
   for(size_t i=0; i<values.dimension(0); ++i) {
     for(size_t j=0; j<values.dimension(1); ++j) {
-      EXPECT_NEAR(stk::simd::get_data(values(i,j),0), oldValues[counter++], tol)<<"i:"<<i<<", j:"<<j;
+      ASSERT_NEAR(stk::simd::get_data(values(i,j),0), oldValues[counter++], tol)<<"i:"<<i<<", j:"<<j;
     }
   }
 }
+
+#define CHECK_THAT_VALUES_MATCH_1D(x,y) \
+{\
+  int counter = 0; \
+  for(size_t i=0; i<x.dimension(0); ++i) { \
+    ASSERT_NEAR(stk::simd::get_data(x(i),0), y[counter++], tol)<<"i:"<<i; \
+  }\
+}\
+
+#define CHECK_THAT_VALUES_MATCH_2D(x,y) \
+{\
+  int counter = 0; \
+  for(size_t i=0; i<x.dimension(0); ++i) { \
+    for(size_t j=0; j<x.dimension(1); ++j) { \
+        ASSERT_NEAR(stk::simd::get_data(x(i,j),0), y[counter++], tol)<<"i:"<<i<<", j:"<<j; \
+      }\
+    }\
+}\
+
+
+#define CHECK_THAT_VALUES_MATCH_3D(x,y) \
+{\
+  int counter = 0; \
+  for(size_t i=0; i<x.dimension(0); ++i) { \
+    for(size_t j=0; j<x.dimension(1); ++j) { \
+      for(size_t k=0; k<x.dimension(2); ++k) { \
+        ASSERT_NEAR(stk::simd::get_data(x(i,j,k),0), y[counter++], tol)<<"i:"<<i<<", j:"<<j<<", k:"<<k; \
+      }\
+    }\
+  }\
+}\
 
 void check_that_values_match(const sierra::nalu::SharedMemView<DoubleType***>& values,
                              const double* oldValues)
@@ -35,7 +66,7 @@ void check_that_values_match(const sierra::nalu::SharedMemView<DoubleType***>& v
   for(size_t i=0; i<values.dimension(0); ++i) {
     for(size_t j=0; j<values.dimension(1); ++j) {
       for(size_t k=0; k<values.dimension(2); ++k) {
-        EXPECT_NEAR(stk::simd::get_data(values(i,j,k),0), oldValues[counter++], tol)<<"i:"<<i<<", j:"<<j<<", k:"<<k;
+        ASSERT_NEAR(stk::simd::get_data(values(i,j,k),0), oldValues[counter++], tol)<<"i:"<<i<<", j:"<<j<<", k:"<<k;
       }
     }
   }
@@ -63,7 +94,7 @@ void compare_old_scv_volume( const sierra::nalu::SharedMemView<DoubleType**>& v_
   double error = 0;
   meSCV->determinant(1, coords.data(), volume.data(), &error);
   EXPECT_NEAR(error, 0.0, tol);
-  check_that_values_match(scv_volume, &volume[0]);
+  CHECK_THAT_VALUES_MATCH_1D(scv_volume, volume);
 }
 
 void compare_old_scs_areav( const sierra::nalu::SharedMemView<DoubleType**>& v_coords,
@@ -77,7 +108,7 @@ void compare_old_scs_areav( const sierra::nalu::SharedMemView<DoubleType**>& v_c
   double error = 0;
   meSCS->determinant(1, coords.data(), areav.data(), &error);
   EXPECT_NEAR(error, 0.0, tol);
-  check_that_values_match(scs_areav, &areav[0]);
+  CHECK_THAT_VALUES_MATCH_2D(scs_areav, areav);
 }
 
 void compare_old_scs_grad_op( const sierra::nalu::SharedMemView<DoubleType**>& v_coords,
@@ -93,9 +124,9 @@ void compare_old_scs_grad_op( const sierra::nalu::SharedMemView<DoubleType**>& v
   std::vector<double> det_j(len, 0.0);
   double error = 0;
   meSCS->grad_op(1, coords.data(), grad_op.data(), deriv.data(), det_j.data(), &error);
-  EXPECT_NEAR(error, 0.0, tol);
-  check_that_values_match(scs_dndx, &grad_op[0]);
-  check_that_values_match(scs_deriv, &deriv[0]);
+  ASSERT_NEAR(error, 0.0, tol);
+  CHECK_THAT_VALUES_MATCH_3D(scs_dndx, grad_op);
+  CHECK_THAT_VALUES_MATCH_3D(scs_deriv, deriv);
 }
 
 void compare_old_scs_shifted_grad_op( const sierra::nalu::SharedMemView<DoubleType**>& v_coords,
@@ -112,7 +143,7 @@ void compare_old_scs_shifted_grad_op( const sierra::nalu::SharedMemView<DoubleTy
   double error = 0;
   meSCS->shifted_grad_op(1, coords.data(), grad_op.data(), deriv.data(), det_j.data(), &error);
   EXPECT_NEAR(error, 0.0, tol);
-  check_that_values_match(scs_deriv, &deriv[0]);
+  CHECK_THAT_VALUES_MATCH_3D(scs_deriv, deriv);
 }
 
 void compare_old_scs_gij(const sierra::nalu::SharedMemView<DoubleType**>& v_coords,
@@ -133,8 +164,8 @@ void compare_old_scs_gij(const sierra::nalu::SharedMemView<DoubleType**>& v_coor
   double error = 0;
   meSCS->grad_op(1, coords.data(), grad_op.data(), deriv.data(), det_j.data(), &error);
   meSCS->gij(coords.data(), gijUpper.data(), gijLower.data(), deriv.data());
-  check_that_values_match(v_gijUpper, &gijUpper[0]);
-  check_that_values_match(v_gijLower, &gijLower[0]);
+  CHECK_THAT_VALUES_MATCH_3D(v_gijUpper, gijUpper);
+  CHECK_THAT_VALUES_MATCH_3D(v_gijLower, gijLower);
 }
 
 template<typename AlgTraits>

@@ -15,6 +15,7 @@
 #include <SimdInterface.h>
 #include <Kokkos_Core.hpp>
 
+#include <NaluEnv.h>
 #include <stk_util/environment/ReportHandler.hpp>
 
 #include <vector>
@@ -41,26 +42,34 @@ namespace nalu {
      * Hexahedral Cells", Jeffrey Grandy, LLNL, UCRL-ID-128886,
      *  October 30, 1997.
      */
+
+    ThrowRequire(is_aligned(areacoords,64));
+    ThrowRequire(is_aligned(area.data(),64));
+
     using ftype = typename ViewType::value_type;
 
     area(ics,0) = 0.0;
     area(ics,1) = 0.0;
     area(ics,2) = 0.0;
 
-    const ftype xmid[3] = {
+    const NALU_ALIGN(64) ftype xmid[3] = {
         0.25 * (areacoords[0][0] + areacoords[1][0] + areacoords[2][0] + areacoords[3][0]),
         0.25 * (areacoords[0][1] + areacoords[1][1] + areacoords[2][1] + areacoords[3][1]),
         0.25 * (areacoords[0][2] + areacoords[1][2] + areacoords[2][2] + areacoords[3][2])
     };
+    ThrowRequire(is_aligned(xmid,64));
 
-    ftype r1[3] = { areacoords[0][0] - xmid[0], areacoords[0][1] - xmid[1], areacoords[0][2] - xmid[2] };
+    NALU_ALIGN(64) ftype r1[3] = { areacoords[0][0] - xmid[0], areacoords[0][1] - xmid[1], areacoords[0][2] - xmid[2] };
+    ThrowRequire(is_aligned(r1,64));
+
     for (int itriangle = 0; itriangle < 4; ++itriangle) {
       const int t_index = (itriangle + 1) % 4;
-      const ftype r2[3] = {
+      const NALU_ALIGN(64) ftype r2[3] = {
           areacoords[t_index][0] - xmid[0],
           areacoords[t_index][1] - xmid[1],
           areacoords[t_index][2] - xmid[2]
       };
+      ThrowRequire(is_aligned(r2,64));
 
       area(ics, 0) += r1[1] * r2[2] - r2[1] * r1[2];
       area(ics, 1) += r1[2] * r2[0] - r2[2] * r1[0];
@@ -75,6 +84,9 @@ namespace nalu {
     area(ics,2) *= 0.5;
   }
 
+  static inline bool is_aligned(const void *KOKKOS_RESTRICT pointer, size_t byte_count)
+  { return (uintptr_t)pointer % byte_count == 0; }
+
   template <typename RealType>
   RealType hex_volume_grandy(RealType scvcoords[8][3])
   {
@@ -85,6 +97,9 @@ namespace nalu {
      * Hexahedral Cells", Jeffrey Grandy, LLNL, UCRL-ID-128886,
      *  October 30, 1997.
      */
+
+
+    ThrowRequire(is_aligned(scvcoords,64));
     constexpr int nTri = 24;
     constexpr int dim = 3;
 
@@ -92,7 +107,9 @@ namespace nalu {
     constexpr int nFaces = 6;
     constexpr int npv = nNodes + nFaces;
 
-    RealType coordv[npv][dim];
+    NALU_ALIGN(64) RealType coordv[npv][dim];
+    ThrowRequire(is_aligned(coordv,64));
+
 
     // copy coordinates
     for (int n = 0; n < nNodes; ++n) {
@@ -138,14 +155,10 @@ namespace nalu {
       const int q = triangular_facets[k][1];
       const int r = triangular_facets[k][2];
 
-      const RealType triFaceMid[3] = {
-          coordv[p][0] + coordv[q][0] + coordv[r][0],
-          coordv[p][1] + coordv[q][1] + coordv[r][1],
-          coordv[p][2] + coordv[q][2] + coordv[r][2]
-      };
 
       enum {XC = 0, YC = 1, ZC = 2};
-      RealType dxv[3];
+      NALU_ALIGN(64) RealType dxv[3];
+      ThrowRequire(is_aligned(dxv,64));
 
       dxv[0] = ( coordv[q][YC] - coordv[p][YC] ) * ( coordv[r][ZC] - coordv[p][ZC] )
              - ( coordv[r][YC] - coordv[p][YC] ) * ( coordv[q][ZC] - coordv[p][ZC] );
@@ -156,6 +169,13 @@ namespace nalu {
       dxv[2] = ( coordv[q][XC] - coordv[p][XC] ) * ( coordv[r][YC] - coordv[p][YC] )
              - ( coordv[r][XC] - coordv[p][XC] ) * ( coordv[q][YC] - coordv[p][YC] );
 
+
+      const NALU_ALIGN(64) RealType triFaceMid[3] = {
+          coordv[p][0] + coordv[q][0] + coordv[r][0],
+          coordv[p][1] + coordv[q][1] + coordv[r][1],
+          coordv[p][2] + coordv[q][2] + coordv[r][2]
+      };
+      ThrowRequire(is_aligned(triFaceMid,64));
       volume += triFaceMid[0] * dxv[0] + triFaceMid[1] * dxv[1] + triFaceMid[2] * dxv[2];
     }
     volume /= RealType(18.0);

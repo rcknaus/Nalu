@@ -239,8 +239,8 @@ private:
   void set_interior_info();
 
   double jacobian_determinant(
-    const double *POINTER_RESTRICT elemNodalCoords,
-    const double *POINTER_RESTRICT shapeDerivs ) const;
+    const double *KOKKOS_RESTRICT elemNodalCoords,
+    const double *KOKKOS_RESTRICT shapeDerivs ) const;
 
   InterpWeightType interpWeights_;
   GradWeightType referenceGradWeights_;
@@ -406,15 +406,15 @@ private:
   void set_boundary_info();
 
   template <Jacobian::Direction dir>
-  void area_vector(const double *POINTER_RESTRICT elemNodalCoords,
-    double *POINTER_RESTRICT shapeDeriv,
-    double *POINTER_RESTRICT areaVector ) const;
+  void area_vector(const double *KOKKOS_RESTRICT elemNodalCoords,
+    double *KOKKOS_RESTRICT shapeDeriv,
+    double *KOKKOS_RESTRICT areaVector ) const;
 
   void gradient(
-    const double *POINTER_RESTRICT elemNodalCoords,
-    const double *POINTER_RESTRICT shapeDeriv,
-    double *POINTER_RESTRICT grad,
-    double *POINTER_RESTRICT det_j ) const;
+    const double *KOKKOS_RESTRICT elemNodalCoords,
+    const double *KOKKOS_RESTRICT shapeDeriv,
+    double *KOKKOS_RESTRICT grad,
+    double *KOKKOS_RESTRICT det_j ) const;
 
   template <int direction, typename GradViewType, typename CoordViewType, typename OutputViewType>
   void area_vector(int ip, GradViewType referenceGradWeights, CoordViewType coords, OutputViewType areav)
@@ -505,9 +505,9 @@ private:
   void eval_shape_derivs_at_shifted_ips() final;
 
   void area_vector(
-    const double *POINTER_RESTRICT coords,
-    const double *POINTER_RESTRICT shapeDerivs,
-    double *POINTER_RESTRICT areaVector) const;
+    const double *KOKKOS_RESTRICT coords,
+    const double *KOKKOS_RESTRICT shapeDerivs,
+    double *KOKKOS_RESTRICT areaVector) const;
 
   void quad9_shape_fcn(
     int npts,

@@ -133,8 +133,8 @@ void HigherOrderHexSCV::determinant(
 //--------------------------------------------------------------------------
 double
 HigherOrderHexSCV::jacobian_determinant(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT shapeDerivs) const
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT shapeDerivs) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0; double dx_ds3 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0; double dy_ds3 = 0.0;
@@ -657,9 +657,9 @@ HigherOrderHexSCS::determinant(
 //--------------------------------------------------------------------------
 template <Jacobian::Direction direction> void
 HigherOrderHexSCS::area_vector(
-  const double *POINTER_RESTRICT elemNodalCoords,
-  double *POINTER_RESTRICT shapeDeriv,
-  double *POINTER_RESTRICT areaVector) const
+  const double *KOKKOS_RESTRICT elemNodalCoords,
+  double *KOKKOS_RESTRICT shapeDeriv,
+  double *KOKKOS_RESTRICT areaVector) const
 {
   constexpr int s1Component = (direction == Jacobian::T_DIRECTION) ?
       Jacobian::S_DIRECTION : Jacobian::T_DIRECTION;
@@ -774,11 +774,11 @@ void HigherOrderHexSCS::face_grad_op(
 //--------------------------------------------------------------------------
 void
 HigherOrderHexSCS::gradient(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT geometricShapeDeriv,
-  const double* POINTER_RESTRICT shapeDeriv,
-  double* POINTER_RESTRICT grad,
-  double* POINTER_RESTRICT det_j) const
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT geometricShapeDeriv,
+  const double* KOKKOS_RESTRICT shapeDeriv,
+  double* KOKKOS_RESTRICT grad,
+  double* KOKKOS_RESTRICT det_j) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0; double dx_ds3 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0; double dy_ds3 = 0.0;
@@ -847,10 +847,10 @@ HigherOrderHexSCS::gradient(
 //--------------------------------------------------------------------------
 void
 HigherOrderHexSCS::gradient(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT shapeDeriv,
-  double* POINTER_RESTRICT grad,
-  double* POINTER_RESTRICT det_j) const
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT shapeDeriv,
+  double* KOKKOS_RESTRICT grad,
+  double* KOKKOS_RESTRICT det_j) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0; double dx_ds3 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0; double dy_ds3 = 0.0;
@@ -1093,8 +1093,8 @@ HigherOrderQuad3DSCS::determinant(
 //--------------------------------------------------------------------------
 void
 HigherOrderQuad3DSCS::area_vector(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT shapeDeriv,
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT shapeDeriv,
   std::array<double,3>& areaVector) const
 {
   // return the normal area vector given shape derivatives dnds OR dndt
@@ -1228,8 +1228,8 @@ HigherOrderQuad2DSCV::determinant(
 //--------------------------------------------------------------------------
 double
 HigherOrderQuad2DSCV::jacobian_determinant(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT shapeDerivs) const
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT shapeDerivs) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0;
@@ -1682,10 +1682,10 @@ HigherOrderQuad2DSCS::face_grad_op(
 //--------------------------------------------------------------------------
 void
 HigherOrderQuad2DSCS::gradient(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT shapeDeriv,
-  double* POINTER_RESTRICT grad,
-  double* POINTER_RESTRICT det_j) const
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT shapeDeriv,
+  double* KOKKOS_RESTRICT grad,
+  double* KOKKOS_RESTRICT det_j) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0;
@@ -1729,11 +1729,11 @@ HigherOrderQuad2DSCS::gradient(
 //--------------------------------------------------------------------------
 void
 HigherOrderQuad2DSCS::gradient(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT geometricShapeDeriv,
-  const double* POINTER_RESTRICT shapeDeriv,
-  double* POINTER_RESTRICT grad,
-  double* POINTER_RESTRICT det_j) const
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT geometricShapeDeriv,
+  const double* KOKKOS_RESTRICT shapeDeriv,
+  double* KOKKOS_RESTRICT grad,
+  double* KOKKOS_RESTRICT det_j) const
 {
   double dx_ds1 = 0.0;  double dx_ds2 = 0.0;
   double dy_ds1 = 0.0;  double dy_ds2 = 0.0;
@@ -1801,9 +1801,9 @@ HigherOrderQuad2DSCS::opposingFace(
 //--------------------------------------------------------------------------
 template <Jacobian::Direction direction> void
 HigherOrderQuad2DSCS::area_vector(
-  const double *POINTER_RESTRICT elemNodalCoords,
-  double *POINTER_RESTRICT shapeDeriv,
-  double *POINTER_RESTRICT normalVec ) const
+  const double *KOKKOS_RESTRICT elemNodalCoords,
+  double *KOKKOS_RESTRICT shapeDeriv,
+  double *KOKKOS_RESTRICT normalVec ) const
 {
   constexpr int s1Component = (direction == Jacobian::S_DIRECTION) ?
       Jacobian::T_DIRECTION : Jacobian::S_DIRECTION;
@@ -1914,8 +1914,8 @@ HigherOrderEdge2DSCS::shape_fcn(double *shpfc)
 //--------------------------------------------------------------------------
 void
 HigherOrderEdge2DSCS::area_vector(
-  const double* POINTER_RESTRICT elemNodalCoords,
-  const double* POINTER_RESTRICT shapeDeriv,
+  const double* KOKKOS_RESTRICT elemNodalCoords,
+  const double* KOKKOS_RESTRICT shapeDeriv,
   std::array<double,2>& areaVector) const
 {
   double dxdr = 0.0;  double dydr = 0.0;

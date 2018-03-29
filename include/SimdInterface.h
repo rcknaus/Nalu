@@ -36,6 +36,8 @@ static constexpr int simdLen = stk::simd::ndoubles;
 inline
 size_t get_num_simd_groups(size_t length)
 {
+  static_assert(alignof(DoubleType) ==32, "");
+
     size_t numSimdGroups = length/simdLen;
     const size_t remainder = length%simdLen;
     if (remainder > 0) {

@@ -43,6 +43,10 @@ namespace nalu{
     return val;
   }
 
+  template <typename ScalarType> ScalarType dot3(const ScalarType* u, const ScalarType* v) {
+    return (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]);
+  }
+
   template <typename ScalarType>
   void cross3(const ScalarType* u, const ScalarType* v, ScalarType* cross)
   {
@@ -102,8 +106,8 @@ namespace nalu{
 
   template <typename ScalarType>
   KOKKOS_FORCEINLINE_FUNCTION void invert_matrix33(
-    const ScalarType* POINTER_RESTRICT A,
-    ScalarType* POINTER_RESTRICT Ainv)
+    const ScalarType* KOKKOS_RESTRICT A,
+    ScalarType* KOKKOS_RESTRICT Ainv)
   {
     enum { XX = 0, XY = 1, XZ = 2, YX = 3, YY = 4, YZ = 5, ZX = 6, ZY = 7, ZZ = 8 };
     ScalarType inv_detj = 1.0 / determinant33(A);
@@ -121,9 +125,9 @@ namespace nalu{
 
   template <typename ScalarType>
   KOKKOS_FORCEINLINE_FUNCTION void solve22(
-    const ScalarType* POINTER_RESTRICT A,
-    const ScalarType* POINTER_RESTRICT b,
-    ScalarType*  POINTER_RESTRICT x)
+    const ScalarType* KOKKOS_RESTRICT A,
+    const ScalarType* KOKKOS_RESTRICT b,
+    ScalarType*  KOKKOS_RESTRICT x)
   {
     ThrowAssert(stk::simd::are_any(determinant22(A) > tiny_positive_value()));
     enum { XX = 0, XY = 1, YX = 2, YY = 3 };
@@ -137,9 +141,9 @@ namespace nalu{
   // computes b = A^-1 x;
   template <typename ScalarType>
   KOKKOS_FORCEINLINE_FUNCTION void solve33(
-    const ScalarType* POINTER_RESTRICT A,
-    const ScalarType* POINTER_RESTRICT b,
-    ScalarType*  POINTER_RESTRICT x)
+    const ScalarType* KOKKOS_RESTRICT A,
+    const ScalarType* KOKKOS_RESTRICT b,
+    ScalarType*  KOKKOS_RESTRICT x)
   {
     ThrowAssert(stk::simd::are_any(determinant33(A) > tiny_positive_value()));
 
