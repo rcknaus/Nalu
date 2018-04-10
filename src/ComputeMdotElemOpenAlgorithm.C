@@ -86,8 +86,6 @@ ComputeMdotElemOpenAlgorithm::execute()
   
   // extract noc
   const std::string dofName = "pressure";
-  const double includeNOC 
-    = (realm_.get_noc_usage(dofName) == true) ? 1.0 : 0.0;
 
   // extract global algorithm options, if active
   const double pstabFac = realm_.solutionOptions_->activateOpenMdotCorrection_ 
@@ -98,15 +96,11 @@ ComputeMdotElemOpenAlgorithm::execute()
   std::vector<double> uBip(nDim);
   std::vector<double> rho_uBip(nDim);
   std::vector<double> GpdxBip(nDim);
-  std::vector<double> coordBip(nDim);
-  std::vector<double> coordScs(nDim);
 
   // pointers to fixed values
   double *p_uBip = &uBip[0];
   double *p_rho_uBip = &rho_uBip[0];
   double *p_GpdxBip = &GpdxBip[0];
-  double *p_coordBip = &coordBip[0];
-  double *p_coordScs = &coordScs[0];
 
   // nodal fields to gather
   std::vector<double> ws_coordinates;
@@ -117,8 +111,11 @@ ComputeMdotElemOpenAlgorithm::execute()
   std::vector<double> ws_density;
   std::vector<double> ws_bcPressure;
   // master element
-  std::vector<double> ws_shape_function;
   std::vector<double> ws_face_shape_function;
+
+  std::vector<double> ws_dndx;
+  std::vector<double> ws_modifiedPressure;
+  std::vector<double> ws_det_j;
 
   // time step; scale projection time scale by pstabFac (no divide by here)
   const double dt = realm_.get_time_step();
@@ -157,7 +154,6 @@ ComputeMdotElemOpenAlgorithm::execute()
     // volume master element
     MasterElement *meSCS = sierra::nalu::MasterElementRepo::get_surface_master_element(theElemTopo);
     const int nodesPerElement = meSCS->nodesPerElement_;
-    const int numScsIp = meSCS->numIntPoints_;
 
     // face master element
     MasterElement *meFC = sierra::nalu::MasterElementRepo::get_surface_master_element(b.topology());
@@ -171,8 +167,11 @@ ComputeMdotElemOpenAlgorithm::execute()
     ws_Gpdx.resize(nodesPerFace*nDim);
     ws_density.resize(nodesPerFace);
     ws_bcPressure.resize(nodesPerFace);
-    ws_shape_function.resize(numScsIp*nodesPerElement);
     ws_face_shape_function.resize(numScsBip*nodesPerFace);
+
+    ws_dndx.resize(nodesPerElement*nDim*numScsBip);
+    ws_modifiedPressure.resize(nodesPerElement);
+    ws_det_j.resize(numScsBip);
 
     // pointers
     double *p_coordinates = &ws_coordinates[0];
@@ -181,14 +180,11 @@ ComputeMdotElemOpenAlgorithm::execute()
     double *p_Gpdx = &ws_Gpdx[0];
     double *p_density = &ws_density[0];
     double *p_bcPressure = &ws_bcPressure[0];
-    double *p_shape_function = &ws_shape_function[0];
     double *p_face_shape_function = &ws_face_shape_function[0];
 
-    // shape functions; interior
-    if ( shiftPoisson_ )
-      meSCS->shifted_shape_fcn(&p_shape_function[0]);
-    else
-      meSCS->shape_fcn(&p_shape_function[0]);
+    double *p_dndx = &ws_dndx[0];
+    double *p_modifiedPressure = &ws_modifiedPressure[0];
+    double *p_det_j = &ws_det_j[0];
 
     // shape functions; boundary
     if ( shiftMdot_ )
@@ -254,6 +250,7 @@ ComputeMdotElemOpenAlgorithm::execute()
 
         // gather scalars
         p_pressure[ni] = *stk::mesh::field_data(*pressure_, node);
+        p_modifiedPressure[ni] = p_pressure[ni];
 
         // gather vectors
         double * coords = stk::mesh::field_data(*coordinates_, node);
@@ -263,18 +260,23 @@ ComputeMdotElemOpenAlgorithm::execute()
         }
       }
 
+      for (int j = 0; j < nodesPerFace; ++j) {
+        p_modifiedPressure[face_node_ordinals[j]] = p_bcPressure[j];
+      }
+
+      double scs_error = 0;
+      if ( shiftPoisson_ )
+        meSCS->shifted_face_grad_op(1, face_ordinal, p_coordinates, p_dndx, p_det_j, &scs_error);
+      else
+        meSCS->face_grad_op(1, face_ordinal, p_coordinates, p_dndx, p_det_j, &scs_error);
+
       // loop over boundary ips
       for ( int ip = 0; ip < numScsBip; ++ip ) {
-
-        const int opposingScsIp = meSCS->opposingFace(face_ordinal,ip);
-
         // zero out vector quantities
         for ( int j = 0; j < nDim; ++j ) {
           p_uBip[j] = 0.0;
           p_rho_uBip[j] = 0.0;
           p_GpdxBip[j] = 0.0;
-          p_coordBip[j] = 0.0;
-          p_coordScs[j] = 0.0;
         }
         double rhoBip = 0.0;
 
@@ -282,59 +284,37 @@ ComputeMdotElemOpenAlgorithm::execute()
         double pBip = 0.0;
         const int offSetSF_face = ip*nodesPerFace;
         for ( int ic = 0; ic < nodesPerFace; ++ic ) {
-          const int fn = face_node_ordinals[ic];
           const double r = p_face_shape_function[offSetSF_face+ic];
           const double rhoIC = p_density[ic];
           rhoBip += r*rhoIC;
           pBip += r*p_bcPressure[ic];
           const int offSetFN = ic*nDim;
-          const int offSetEN = fn*nDim;
           for ( int j = 0; j < nDim; ++j ) {
             p_uBip[j] += r*p_vrtm[offSetFN+j];
             p_rho_uBip[j] += r*rhoIC*p_vrtm[offSetFN+j];
             p_GpdxBip[j] += r*p_Gpdx[offSetFN+j];
-            p_coordBip[j] += r*p_coordinates[offSetEN+j];
           }
         }
 
-        // data at interior opposing face
-        double pScs = 0.0;
-        const int offSetSF_elem = opposingScsIp*nodesPerElement;
-        for ( int ic = 0; ic < nodesPerElement; ++ic ) {
-          const double r = p_shape_function[offSetSF_elem+ic];
-          pScs += r*p_pressure[ic];
-          const int offSet = ic*nDim;
-          for ( int j = 0; j < nDim; ++j ) {
-            p_coordScs[j] += r*p_coordinates[offSet+j];
-          }
-        }
-
-        // form axdx, asq and mdot (without dp/dn or noc)
-        double axdx = 0.0;
-        double asq = 0.0;
         double tmdot = 0.0;
         for ( int j = 0; j < nDim; ++j ) {
-          const double dxj = p_coordBip[j] - p_coordScs[j];
           const double axj = areaVec[ip*nDim+j];
-          axdx += axj*dxj;
-          asq += axj*axj;
-          tmdot += (interpTogether*p_rho_uBip[j] + om_interpTogether*rhoBip*p_uBip[j] 
-                    + projTimeScale*p_GpdxBip[j])*axj;
+          tmdot += (interpTogether*p_rho_uBip[j] + om_interpTogether*rhoBip*p_uBip[j]+ projTimeScale*p_GpdxBip[j])*axj;
         }
-	
-        const double inv_axdx = 1.0/axdx;
 
-        // deal with noc
-        double noc = 0.0;
-        for ( int j = 0; j < nDim; ++j ) {
-          const double dxj = p_coordBip[j] - p_coordScs[j];
-          const double axj = areaVec[ip*nDim+j];
-          const double kxj = axj - asq*inv_axdx*dxj; // NOC
-          noc += kxj*p_GpdxBip[j];
+        double dpdnBCIp = 0.0;
+        for (int ic = 0; ic < nodesPerElement; ++ic) {
+          const int offsetDndx = ip*nodesPerElement*nDim + ic * nDim;
+          double fac = 0.0;
+          for (int d = 0; d < nDim; ++d) {
+            fac += areaVec[ip*nDim+d] * p_dndx[offsetDndx +d];
+          }
+          dpdnBCIp += fac * p_modifiedPressure[ic];
         }
 
         // final mdot
-        tmdot -= projTimeScale*((pBip-pScs)*asq*inv_axdx + noc*includeNOC);
+        tmdot -= projTimeScale*dpdnBCIp;
+
         // scatter to mdot and accumulate
         mdot[ip] = tmdot;
         mdotOpen += tmdot;
