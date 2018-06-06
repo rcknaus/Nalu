@@ -979,8 +979,7 @@ void PyrSCS::face_grad_op(
   NALU_ALIGNED DoubleType psi[maxDerivSize];
 
   const int numFaceIps = (face_ordinal == 4) ? quad_traits::numFaceIp_ : tri_traits::numFaceIp_;
-  const int nodesPerElement = (face_ordinal == 4) ? quad_traits::nodesPerElement_ : tri_traits::nodesPerElement_;
-  SharedMemView<DoubleType***> deriv(psi, numFaceIps, nodesPerElement, dim);
+  SharedMemView<DoubleType***> deriv(psi, numFaceIps, AlgTraitsPyr5::nodesPerElement_, dim);
 
   const int offset = tri_traits::numFaceIp_ * face_ordinal;
   pyr_deriv(numFaceIps, &intgExpFace_[dim * offset], deriv);
@@ -1003,8 +1002,7 @@ void PyrSCS::shifted_face_grad_op(
   NALU_ALIGNED DoubleType psi[maxDerivSize];
 
   const int numFaceIps = (face_ordinal == 4) ? quad_traits::numFaceIp_ : tri_traits::numFaceIp_;
-  const int nodesPerElement = (face_ordinal == 4) ? quad_traits::nodesPerElement_ : tri_traits::nodesPerElement_;
-  SharedMemView<DoubleType***> deriv(psi, numFaceIps, nodesPerElement, dim);
+  SharedMemView<DoubleType***> deriv(psi, numFaceIps, AlgTraitsPyr5::nodesPerElement_, dim);
 
   const int offset = tri_traits::numFaceIp_ * face_ordinal;
   shifted_pyr_deriv(numFaceIps, &intgExpFaceShift_[dim * offset], deriv);

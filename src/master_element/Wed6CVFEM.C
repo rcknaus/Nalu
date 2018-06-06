@@ -782,8 +782,7 @@ void WedSCS::face_grad_op(
   constexpr int maxDerivSize = quad_traits::numFaceIp_ *  quad_traits::nodesPerElement_ * dim;
   NALU_ALIGNED DoubleType psi[maxDerivSize];
   const int numFaceIps = (face_ordinal < 3) ? quad_traits::numFaceIp_ : tri_traits::numFaceIp_;
-  const int nodesPerElement = (face_ordinal < 3) ? quad_traits::nodesPerElement_ : tri_traits::nodesPerElement_;
-  SharedMemView<DoubleType***> deriv(psi, numFaceIps, nodesPerElement, dim);
+  SharedMemView<DoubleType***> deriv(psi, numFaceIps, AlgTraitsWed6::nodesPerElement_, dim);
 
   const int offset = quad_traits::numFaceIp_ * face_ordinal;
   wed_deriv(numFaceIps, &intgExpFace_[dim * offset], deriv);
@@ -804,8 +803,7 @@ void WedSCS::shifted_face_grad_op(
   constexpr int maxDerivSize = quad_traits::numFaceIp_ *  quad_traits::nodesPerElement_ * dim;
   NALU_ALIGNED DoubleType psi[maxDerivSize];
   const int numFaceIps = (face_ordinal < 3) ? quad_traits::numFaceIp_ : tri_traits::numFaceIp_;
-  const int nodesPerElement = (face_ordinal < 3) ? quad_traits::nodesPerElement_ : tri_traits::nodesPerElement_;
-  SharedMemView<DoubleType***> deriv(psi, numFaceIps, nodesPerElement, dim);
+  SharedMemView<DoubleType***> deriv(psi, numFaceIps, AlgTraitsWed6::nodesPerElement_, dim);
 
   const int offset = sideOffset_[face_ordinal];
   wed_deriv(numFaceIps, &intgExpFaceShift_[dim * offset], deriv);
